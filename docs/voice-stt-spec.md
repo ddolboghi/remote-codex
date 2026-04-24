@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Automatically transcribe Discord Voice Messages (speech-to-text) and forward them to OpenCode as text prompts.
+Automatically transcribe Discord Voice Messages (speech-to-text) and forward them to Codex as text prompts.
 When a user sends a voice message via the 🎤 button in a thread with `/code` passthrough mode enabled,
 it is transcribed and processed identically to a typed text message.
 
@@ -17,7 +17,7 @@ it is transcribed and processed identically to a typed text message.
 6. OpenAI Whisper API converts speech → text
 7. 🎙️ reaction removed after transcription completes
 8. Transcribed text is displayed as "📌 Prompt: {text}"
-9. Forwarded to OpenCode via runPrompt() — same as typed messages
+9. Forwarded to Codex via runPrompt() — same as typed messages
 ```
 
 ## 3. Tech Stack
@@ -86,7 +86,7 @@ Voice Message characteristics:
 ### 5.1 Resolution Order
 
 1. Environment variable `OPENAI_API_KEY` (takes priority if set)
-2. `~/.remote-opencode/config.json` field `openaiApiKey`
+2. `~/.remote-codex/config.json` field `openaiApiKey`
 
 ### 5.2 config.json Change
 
@@ -105,14 +105,14 @@ Voice Message characteristics:
 - Voice messages are silently ignored (same as current behavior — empty content returns early)
 - No errors or warnings. The feature is gracefully disabled.
 
-### 5.4 CLI Command: `remote-opencode voice`
+### 5.4 CLI Command: `remote-codex voice`
 
 Follows the existing `allow` subcommand pattern in `cli.ts` (using `commander`).
 
 ```
-remote-opencode voice set <apiKey>    Set OpenAI API key for voice transcription
-remote-opencode voice remove          Remove the stored OpenAI API key
-remote-opencode voice status          Show current voice transcription configuration
+remote-codex voice set <apiKey>    Set OpenAI API key for voice transcription
+remote-codex voice remove          Remove the stored OpenAI API key
+remote-codex voice status          Show current voice transcription configuration
 ```
 
 #### `voice set <apiKey>`
@@ -166,7 +166,7 @@ Note: the `set` subcommand is **not** exposed via Discord slash command — API 
   ```
   🎙️ Voice Transcription: Disabled
     No OpenAI API key configured.
-    Use `remote-opencode voice set <key>` (CLI) or set `OPENAI_API_KEY` env var.
+    Use `remote-codex voice set <key>` (CLI) or set `OPENAI_API_KEY` env var.
   ```
 
 ### 5.6 Setup Wizard Integration

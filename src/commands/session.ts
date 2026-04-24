@@ -36,7 +36,7 @@ function formatRelativeTime(timestamp: number): string {
 export const session: Command = {
   data: new SlashCommandBuilder()
     .setName('session')
-    .setDescription('Browse and manage OpenCode sessions')
+    .setDescription('Browse and manage Codex sessions')
     .addSubcommand((subcommand) =>
       subcommand
         .setName('list')
@@ -106,7 +106,7 @@ export const session: Command = {
         });
 
         const embed = new EmbedBuilder()
-          .setTitle('OpenCode Sessions')
+          .setTitle('Codex Sessions')
           .setDescription(lines.join('\n'))
           .addFields({ name: 'Total', value: `${allSessionIds.length}`, inline: true })
           .setColor(0x3498db);
@@ -259,9 +259,9 @@ export const session: Command = {
         return;
       }
 
-      const sseClient = sessionManager.getSseClient(threadId);
-      if (sseClient) {
-        sseClient.disconnect();
+      const codexClient = sessionManager.getCodexClient(threadId);
+      if (codexClient) {
+        codexClient.disconnect();
         sessionManager.clearSseClient(threadId);
       }
 
@@ -304,7 +304,7 @@ export const session: Command = {
         const isAlive = sessionInfo !== null;
         const title = sessionInfo?.title || 'untitled';
         const threadSession = dataStore.getThreadSession(threadId);
-        const isBusy = sessionManager.getSseClient(threadId)?.isConnected() ?? false;
+        const isBusy = sessionManager.getCodexClient(threadId)?.isConnected() ?? false;
 
         const embed = new EmbedBuilder()
           .setTitle(`Session: ${title}`)
@@ -323,7 +323,7 @@ export const session: Command = {
               value: threadSession ? formatRelativeTime(threadSession.lastUsedAt) : 'unknown',
               inline: true,
             },
-            { name: 'SSE Active', value: isBusy ? 'true' : 'false', inline: true }
+            { name: 'Codex Connection Active', value: isBusy ? 'true' : 'false', inline: true }
           )
           .setColor(isAlive ? 0x2ecc71 : 0xe74c3c);
 

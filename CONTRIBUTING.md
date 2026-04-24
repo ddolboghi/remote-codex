@@ -1,6 +1,6 @@
-# Contributing to remote-opencode
+# Contributing to remote-codex
 
-First off, thank you for considering contributing to remote-opencode! Every contribution helps make this project better for everyone.
+First off, thank you for considering contributing to remote-codex! Every contribution helps make this project better for everyone.
 
 ## Before You Start
 
@@ -27,7 +27,7 @@ Please **do not include version changes** in your PRs. Focus on the code changes
 
 ### Reporting Bugs
 
-1. Check if the issue already exists in [GitHub Issues](https://github.com/RoundTable02/remote-opencode/issues)
+1. Check if the issue already exists in [GitHub Issues](https://github.com/RoundTable02/remote-codex/issues)
 2. If not, create a new issue with:
    - A clear, descriptive title
    - Steps to reproduce the bug
@@ -66,8 +66,8 @@ Please **do not include version changes** in your PRs. Focus on the code changes
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/remote-opencode.git
-cd remote-opencode
+git clone https://github.com/YOUR_USERNAME/remote-codex.git
+cd remote-codex
 
 # Install dependencies
 npm install

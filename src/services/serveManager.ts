@@ -7,13 +7,13 @@ import { getPortConfig } from './configStore.js';
 
 const DEFAULT_PORT_MIN = 14097;
 const DEFAULT_PORT_MAX = 14200;
-const WINDOWS_OPENCODE_COMMANDS = ['opencode.cmd', 'opencode.exe', 'opencode'];
-const POSIX_OPENCODE_COMMANDS = ['opencode'];
+const WINDOWS_CODEX_COMMANDS = ['codex.cmd', 'codex.exe', 'codex'];
+const POSIX_CODEX_COMMANDS = ['codex'];
 
 const instances = new Map<string, ServeInstance>();
 
-function getOpencodeCommandCandidates(): string[] {
-  return process.platform === 'win32' ? WINDOWS_OPENCODE_COMMANDS : POSIX_OPENCODE_COMMANDS;
+function getCodexCommandCandidates(): string[] {
+  return process.platform === 'win32' ? WINDOWS_CODEX_COMMANDS : POSIX_CODEX_COMMANDS;
 }
 
 function resolveCommandFromPath(command: string, pathValue?: string): string | undefined {
@@ -35,17 +35,17 @@ function resolveCommandFromPath(command: string, pathValue?: string): string | u
   return undefined;
 }
 
-function resolveOpencodeCommand(env: NodeJS.ProcessEnv): string {
+function resolveCodexCommand(env: NodeJS.ProcessEnv): string {
   const pathValue = env.PATH ?? env.Path;
 
-  for (const command of getOpencodeCommandCandidates()) {
+  for (const command of getCodexCommandCandidates()) {
     const resolved = resolveCommandFromPath(command, pathValue);
     if (resolved) {
       return resolved;
     }
   }
 
-  return getOpencodeCommandCandidates()[0];
+  return getCodexCommandCandidates()[0];
 }
 
 function formatSpawnError(error: Error, command: string, projectPath: string): string {
@@ -56,14 +56,14 @@ function formatSpawnError(error: Error, command: string, projectPath: string): s
   }
 
   if (spawnError.code === 'ENOENT') {
-    return `OpenCode executable not found: ${command}. Ensure OpenCode is installed and available in PATH for this service.`;
+    return `Codex executable not found: ${command}. Ensure Codex is installed and available in PATH for this service.`;
   }
 
   if (spawnError.code === 'EACCES') {
-    return `OpenCode executable is not accessible: ${command}. Check file permissions and service user access.`;
+    return `Codex executable is not accessible: ${command}. Check file permissions and service user access.`;
   }
 
-  return spawnError.message || 'Failed to spawn opencode process';
+  return spawnError.message || 'Failed to spawn codex app-server process';
 }
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -80,14 +80,14 @@ function isPortAvailable(port: number): Promise<boolean> {
       });
     });
     
-    // Bind to 127.0.0.1 explicitly to match opencode serve's default binding
+    // Bind to 127.0.0.1 explicitly to match codex app-server's loopback listener.
     server.listen(port, '127.0.0.1');
   });
 }
 
 async function isOrphanedServerRunning(port: number): Promise<boolean> {
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/session`, {
+    const response = await fetch(`http://127.0.0.1:${port}/readyz`, {
       signal: AbortSignal.timeout(1000),
     });
     // If we get any response, there's already a server running
@@ -108,7 +108,7 @@ async function findAvailablePort(): Promise<number> {
       continue;
     }
     
-    // Check if there's an orphaned opencode server on this port
+    // Check if there's an orphaned Codex app-server on this port.
     if (await isOrphanedServerRunning(port)) {
       continue;
     }
@@ -123,7 +123,7 @@ async function findAvailablePort(): Promise<number> {
 
 async function isServerResponding(port: number): Promise<boolean> {
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/session`, {
+    const response = await fetch(`http://127.0.0.1:${port}/readyz`, {
       signal: AbortSignal.timeout(2000),
     });
     return response.ok;
@@ -150,14 +150,12 @@ export async function spawnServe(projectPath: string, model?: string): Promise<n
 
   const port = await findAvailablePort();
   
-  // Note: opencode serve doesn't support --model flag
-  // Model selection must happen at session/prompt level, not server startup
-  const args = ['serve', '--port', port.toString()];
+  const args = ['app-server', '--listen', `ws://127.0.0.1:${port}`];
   const env = { ...process.env };
-  const command = resolveOpencodeCommand(env);
+  const command = resolveCodexCommand(env);
   
-  console.log(`[opencode] Spawning: ${command} ${args.join(' ')}`);
-  console.log(`[opencode] Working directory: ${projectPath}`);
+  console.log(`[codex] Spawning: ${command} ${args.join(' ')}`);
+  console.log(`[codex] Working directory: ${projectPath}`);
   
   const child = spawn(command, args, {
     cwd: projectPath,
@@ -183,7 +181,7 @@ export async function spawnServe(projectPath: string, model?: string): Promise<n
     if (stdoutBuffer.length > 2000) {
       stdoutBuffer = stdoutBuffer.slice(-2000);
     }
-    console.log(`[opencode stdout] ${text.trim()}`);
+    console.log(`[codex stdout] ${text.trim()}`);
   });
   
   child.stderr?.on('data', (data) => {
@@ -192,7 +190,7 @@ export async function spawnServe(projectPath: string, model?: string): Promise<n
     if (stderrBuffer.length > 2000) {
       stderrBuffer = stderrBuffer.slice(-2000);
     }
-    console.error(`[opencode stderr] ${text.trim()}`);
+    console.error(`[codex stderr] ${text.trim()}`);
   });
 
   child.on('exit', (code) => {
@@ -204,9 +202,9 @@ export async function spawnServe(projectPath: string, model?: string): Promise<n
         // Combine stdout and stderr for error message
         const combinedOutput = (stderrBuffer.trim() || stdoutBuffer.trim());
         inst.exitError = combinedOutput || `Process exited with code ${code}`;
-        console.error(`[opencode] Process exited with code ${code}`);
+        console.error(`[codex] Process exited with code ${code}`);
         if (combinedOutput) {
-          console.error(`[opencode] Output: ${combinedOutput}`);
+          console.error(`[codex] Output: ${combinedOutput}`);
         }
       }
     }
@@ -214,7 +212,7 @@ export async function spawnServe(projectPath: string, model?: string): Promise<n
 
   child.on('error', (error) => {
     const formattedError = formatSpawnError(error, command, projectPath);
-    console.error(`[opencode] Spawn error: ${formattedError}`);
+    console.error(`[codex] Spawn error: ${formattedError}`);
     const inst = instances.get(key);
     if (inst) {
       inst.exited = true;
@@ -244,7 +242,7 @@ export function stopServe(projectPath: string, model?: string): boolean {
 
 export async function waitForReady(port: number, timeout: number = 30000, projectPath?: string, model?: string): Promise<void> {
   const start = Date.now();
-  const url = `http://127.0.0.1:${port}/session`;
+  const url = `http://127.0.0.1:${port}/readyz`;
   const key = projectPath ? (model ? `${projectPath}:${model}` : projectPath) : null;
 
   while (Date.now() - start < timeout) {
@@ -252,9 +250,9 @@ export async function waitForReady(port: number, timeout: number = 30000, projec
     if (key) {
       const instance = instances.get(key);
       if (instance?.exited) {
-        const errorMsg = instance.exitError || `opencode serve exited with code ${instance.exitCode}`;
+        const errorMsg = instance.exitError || `codex app-server exited with code ${instance.exitCode}`;
         cleanupInstance(key);
-        throw new Error(`opencode serve failed to start: ${errorMsg}`);
+        throw new Error(`codex app-server failed to start: ${errorMsg}`);
       }
     }
 
@@ -272,13 +270,13 @@ export async function waitForReady(port: number, timeout: number = 30000, projec
   if (key) {
     const instance = instances.get(key);
     if (instance?.exited) {
-      const errorMsg = instance.exitError || `opencode serve exited with code ${instance.exitCode}`;
+      const errorMsg = instance.exitError || `codex app-server exited with code ${instance.exitCode}`;
       cleanupInstance(key);
-      throw new Error(`opencode serve failed to start: ${errorMsg}`);
+      throw new Error(`codex app-server failed to start: ${errorMsg}`);
     }
   }
 
-  throw new Error(`Service at port ${port} failed to become ready within ${timeout}ms. Check if 'opencode serve' is working correctly.`);
+  throw new Error(`Service at port ${port} failed to become ready within ${timeout}ms. Check if 'codex app-server' is working correctly.`);
 }
 
 export function stopAll(): void {

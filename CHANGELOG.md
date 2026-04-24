@@ -6,19 +6,19 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **`remote-opencode undeploy` CLI Command** (PR #48): Added a new CLI command to remove the bot's slash commands from the configured Discord guild. This makes it easier to cleanly unregister commands during teardown, testing, or bot reconfiguration.
+- **`remote-codex undeploy` CLI Command** (PR #48): Added a new CLI command to remove the bot's slash commands from the configured Discord guild. This makes it easier to cleanly unregister commands during teardown, testing, or bot reconfiguration.
 
 ## [1.5.1] - 2026-03-24
 
 ### Added
 
-- **Proxy Support**: HTTP proxy environments are now supported for Discord and other external API requests via `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY` environment variables. Local `opencode serve` traffic on `localhost`, `127.0.0.1`, and `::1` is automatically excluded from proxying.
+- **Proxy Support**: HTTP proxy environments are now supported for Discord and other external API requests via `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY` environment variables. Local `codex app-server` traffic on `localhost`, `127.0.0.1`, and `::1` is automatically excluded from proxying.
 
 ### Fixed
 
-- **Shell Spawn Removed** (PR #42): OpenCode is now launched directly instead of through a shell, fixing service-environment failures. Session recovery consolidated so stale runtime sessions are recreated without resetting stored thread metadata.
+- **Shell Spawn Removed** (PR #42): Codex is now launched directly instead of through a shell, fixing service-environment failures. Session recovery consolidated so stale runtime sessions are recreated without resetting stored thread metadata.
 - **Silent Error Swallowing** (PR #36, closes #32): Errors in `updateStreamMessage` (Discord message edits) were silently caught, causing AI responses to appear lost while "Done" still displayed. All edit failures now fall back to sending new messages, ensuring users always see output or error details.
-- **Model Provider Prefix** (PR #35): `/model set` no longer strips the provider prefix (e.g., `opencode/minimax-m2.5-free`), which previously caused "Model not found" errors. Carriage returns (`\r`) in model names are now sanitized consistently across storage and prompt submission.
+- **Model Provider Prefix** (PR #35): `/model set` no longer strips provider prefixes in model names, which previously caused "Model not found" errors. Carriage returns (`\r`) in model names are now sanitized consistently across storage and prompt submission.
 - **Duplicate README Content** (PR #41): Removed duplicate lines in the README.
 
 ### Changed
@@ -29,11 +29,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **`/session` Command**: Browse and manage OpenCode CLI sessions directly from Discord.
+- **`/session` Command**: Browse and manage Codex CLI sessions directly from Discord.
   - `list`: View all sessions for the current project — merges active server sessions with persisted thread mappings, showing title, session ID, mapped thread, and last-used time.
   - `attach`: Attach an existing CLI session to the current thread via an interactive dropdown menu. Automatically sets `freshContext: false` to preserve conversation continuity.
-  - `detach`: Disconnect the current session from the thread, cleaning up SSE connections.
-  - `info`: Display detailed session status in a rich embed — session ID, project path, port, alive/dead status, creation time, last used time, and SSE connection state.
+  - `detach`: Disconnect the current session from the thread, cleaning up Codex stream connections.
+  - `info`: Display detailed session status in a rich embed — session ID, project path, port, alive/dead status, creation time, last used time, and Codex stream connection state.
 - **Model Autocomplete**: `/model set` now provides real-time autocomplete suggestions as you type, powered by a background-cached model list (30s TTL with async refresh).
 - **Model Cache Pre-warming**: The bot pre-loads the model list on startup so the first `/model set` autocomplete is instant — no cold-start timeout.
 - **Autocomplete Handler**: Added generic autocomplete infrastructure to `interactionHandler.ts` — commands can now export an `autocomplete` method.
@@ -62,9 +62,9 @@ All notable changes to this project will be documented in this file.
   - Send voice messages in `/code` passthrough threads — they are transcribed and processed identically to typed text.
   - 🎙️ reaction indicates transcription in progress; removed on completion.
   - Voice messages sent while the bot is busy are queued with attachment metadata — STT is deferred until the queue processes them.
-  - **CLI commands**: `remote-opencode voice set <apiKey>`, `voice remove`, `voice status` for managing the OpenAI API key.
+  - **CLI commands**: `remote-codex voice set <apiKey>`, `voice remove`, `voice status` for managing the OpenAI API key.
   - **Discord `/voice` command**: `remove` and `status` subcommands (API key setting is CLI-only for security).
-  - **Setup wizard integration**: Optional step to configure OpenAI API key during `remote-opencode setup`.
+  - **Setup wizard integration**: Optional step to configure OpenAI API key during `remote-codex setup`.
   - **API key resolution**: `OPENAI_API_KEY` environment variable takes priority over `config.json`.
   - Graceful degradation — voice messages are silently ignored when no API key is configured.
   - Timeout protection: 30s for Discord CDN download, 60s for Whisper API transcription.
@@ -93,7 +93,7 @@ All notable changes to this project will be documented in this file.
 
 - **Access Control (Allowlist)**: Restrict bot usage to specific Discord users via a user ID allowlist.
   - **Setup wizard** (Step 5): Optionally set a bot owner during initial setup.
-  - **CLI commands**: `remote-opencode allow add <userId>`, `remove <userId>`, `list`, and `reset` for managing the allowlist from the terminal.
+  - **CLI commands**: `remote-codex allow add <userId>`, `remove <userId>`, `list`, and `reset` for managing the allowlist from the terminal.
   - **Discord `/allow` command**: Authorized users can manage the allowlist directly from Discord (`/allow add`, `/allow remove`, `/allow list`) — only available when at least one user is already on the allowlist.
   - **Auth guards**: All Discord interactions (slash commands, buttons, passthrough messages) are checked against the allowlist.
   - Unauthorized users receive an ephemeral "not authorized" message; passthrough messages are silently ignored.
@@ -102,8 +102,8 @@ All notable changes to this project will be documented in this file.
 
 ### Security
 
-- Initial allowlist setup **must** be done via the CLI (`remote-opencode allow add`) or the setup wizard (`remote-opencode setup`). The Discord `/allow` command is intentionally disabled when the allowlist is empty to prevent unauthorized users from bootstrapping access.
-- Config directory (`~/.remote-opencode/`) is created with `0700` permissions (owner-only access).
+- Initial allowlist setup **must** be done via the CLI (`remote-codex allow add`) or the setup wizard (`remote-codex setup`). The Discord `/allow` command is intentionally disabled when the allowlist is empty to prevent unauthorized users from bootstrapping access.
+- Config directory (`~/.remote-codex/`) is created with `0700` permissions (owner-only access).
 - Config file (`config.json`) is written with `0600` permissions (owner read/write only).
 - CLI `allow add` validates Discord snowflake format (17-20 digits).
 
@@ -117,7 +117,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Replaced inline `(Model: ...)` suffix with a dedicated context header line across all 7 message states (Starting, Waiting, Sending, Running, Done, Error-SSE, Error-catch).
+- Replaced inline `(Model: ...)` suffix with a dedicated context header line across all 7 message states (Starting, Waiting, Sending, Running, Done, Error-Codex stream, Error-catch).
 
 ## [1.1.0] - 2026-02-05
 
@@ -134,20 +134,20 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - **Refactored Execution Logic**: Moved core prompt execution to a dedicated `executionService` for better reliability and code reuse.
-- **Hardened Server Binding**: Reverted `opencode serve` to use default `127.0.0.1` binding (previously `0.0.0.0`) and updated port availability checks to match, preventing local network exposure.
+- **Hardened Server Binding**: Reverted `codex app-server` to use default `127.0.0.1` binding (previously `0.0.0.0`) and updated port availability checks to match, preventing local network exposure.
 
 ## [1.0.11] - 2026-02-04
 
 ### Added
 
 - Model confirmation in Discord messages: The bot now displays which model is being used when starting a session.
-- Real-time logging: Added always-on logging for `opencode serve` startup commands, working directories, and process output (stdout/stderr) for easier debugging.
+- Real-time logging: Added always-on logging for `codex app-server` startup commands, working directories, and process output (stdout/stderr) for easier debugging.
 
 ### Fixed
 
-- Fixed `opencode serve` startup failures: The bot now correctly detects when the server fails to start immediately and reports the actual error message to Discord instead of timing out after 30 seconds.
-- Resolved `--model` flag error: Moved model selection from the `opencode serve` command (where it was unsupported) to the prompt API.
-- Fixed Model API format: Correctly formatted model identifiers as objects (`{ providerID, modelID }`) as required by the OpenCode API.
+- Fixed `codex app-server` startup failures: The bot now correctly detects when the server fails to start immediately and reports the actual error message to Discord instead of timing out after 30 seconds.
+- Resolved `--model` flag error: Moved model selection from the `codex app-server` command (where it was unsupported) to the prompt API.
+- Fixed Model API format: Correctly formatted model identifiers as objects (`{ providerID, modelID }`) as required by the Codex API.
 - Improved Port Management: Fixed port availability checks to bind to `0.0.0.0` (matching the server) and added checks for orphaned servers to prevent "Address already in use" errors.
 - Fixed button handlers (Interrupt, Create PR) to correctly respect channel model preferences.
 - Fixed instance key logic to include the model, allowing multiple models to be used for the same project in different channels.
@@ -156,13 +156,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- New `/setports` slash command to configure the port range for OpenCode server instances.
+- New `/setports` slash command to configure the port range for Codex server instances.
 
 ### Fixed
 
-- Fixed Windows-specific spawning issue where the bot failed to find the `opencode` command (now targeting `opencode.cmd`).
+- Fixed Windows-specific spawning issue where the bot failed to find the CLI command (now targeting `codex.cmd`).
 - Resolved `spawn EINVAL` errors on Windows by correctly configuring shell execution.
-- Fixed a crash where the bot would attempt to pass an unsupported `--model` flag to `opencode serve`.
+- Fixed a crash where the bot would attempt to pass an unsupported `--model` flag to `codex app-server`.
 - Improved server reliability by extending the ready-check timeout to 30 seconds.
 - Suppressed `DEP0190` security warnings in the terminal caused by Windows-specific shell execution requirements.
 - Standardized internal communication to use `127.0.0.1` and added real-time process logging (available via `DEBUG` env var).
@@ -172,15 +172,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - New `/model` slash command to list and set AI models per channel.
-- Support for `--model` flag in OpenCode server instances.
+- Support for `--model` flag in Codex server instances.
 - Persistent storage for channel-specific model preferences.
 
 ### Fixed
 
-- Fixed a connection timeout issue where the bot failed to connect to the internal `opencode serve` process.
-- Added `--hostname 0.0.0.0` to the `opencode serve` command to ensure the service is reachable.
+- Fixed a connection timeout issue where the bot failed to connect to the internal `codex app-server` process.
+- Added `--hostname 0.0.0.0` to the `codex app-server` command to ensure the service is reachable.
 - Standardized internal communication to use `127.0.0.1` instead of `localhost` to avoid IPv6 resolution conflicts on some systems.
 - Improved process exit handling in `serveManager` to ensure cleaner state management.
 - Fixed `DiscordAPIError[40060]` (Interaction already acknowledged) by adding safety checks and better error handling in `interactionHandler.ts`.
-- Resolved a `TypeError` in `opencode.ts` by adding safety checks for stream message updates.
+- Resolved a `TypeError` in `codex.ts` by adding safety checks for stream message updates.
 - Updated all interaction responses to use `MessageFlags.Ephemeral` instead of the deprecated `ephemeral` property to resolve terminal warnings.

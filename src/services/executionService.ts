@@ -10,7 +10,6 @@ import * as dataStore from './dataStore.js';
 import * as sessionManager from './sessionManager.js';
 import * as serveManager from './serveManager.js';
 import * as worktreeManager from './worktreeManager.js';
-import { SSEClient } from './sseClient.js';
 import { formatOutput, formatOutputForMobile, buildContextHeader } from '../utils/messageFormatter.js';
 import { processNextInQueue } from './queueManager.js';
 
@@ -95,7 +94,7 @@ export async function runPrompt(
   let streamMessage: Message;
   try {
     streamMessage = await (channel as any).send({
-      content: `${contextHeader}\n📌 **Prompt**: ${prompt}\n\n🚀 Starting OpenCode server...`,
+      content: `${contextHeader}\n📌 **Prompt**: ${prompt}\n\n🚀 Starting Codex app-server...`,
       components: [buttons]
     });
   } catch {
@@ -104,12 +103,14 @@ export async function runPrompt(
   
   let port: number;
   let sessionId: string;
+  let turnId: string | undefined;
   let updateInterval: NodeJS.Timeout | null = null;
   let accumulatedText = '';
   let lastContent = '';
   let tick = 0;
   let promptSent = false;
   let hasSessionError = false;
+  let finished = false;
   const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
   
   const updateStreamMessage = async (content: string, components: ActionRowBuilder<ButtonBuilder>[]): Promise<boolean> => {
@@ -135,7 +136,7 @@ export async function runPrompt(
   try {
     port = await serveManager.spawnServe(effectivePath, preferredModel);
     
-    await updateStreamMessage(`${contextHeader}\n📌 **Prompt**: ${prompt}\n\n⏳ Waiting for OpenCode server...`, [buttons]);
+    await updateStreamMessage(`${contextHeader}\n📌 **Prompt**: ${prompt}\n\n⏳ Waiting for Codex app-server...`, [buttons]);
     await serveManager.waitForReady(port, 30000, effectivePath, preferredModel);
     
     const settings = dataStore.getQueueSettings(threadId);
@@ -145,20 +146,24 @@ export async function runPrompt(
       sessionManager.clearSessionForThread(threadId);
     }
 
-    sessionId = await sessionManager.ensureSessionForThread(threadId, effectivePath, port);
-    
-    const sseClient = new SSEClient();
-    sseClient.connect(`http://127.0.0.1:${port}`);
-    sessionManager.setSseClient(threadId, sseClient);
-    
-    sseClient.onPartUpdated((part) => {
-      if (part.sessionID !== sessionId) return;
-      accumulatedText = part.text;
+    sessionId = await sessionManager.ensureSessionForThread(threadId, effectivePath, port, preferredModel);
+    const codexClient = sessionManager.getCodexClient(threadId);
+    if (!codexClient) {
+      throw new Error('Codex app-server client was not initialized');
+    }
+
+    codexClient.onTextDelta((deltaThreadId, text, deltaTurnId) => {
+      if (deltaThreadId !== sessionId) return;
+      if (turnId && deltaTurnId !== turnId) return;
+      accumulatedText += text;
     });
     
-    sseClient.onSessionIdle((idleSessionId) => {
-      if (idleSessionId !== sessionId) return;
+    codexClient.onTurnCompleted((completedThreadId, completedTurnId, turnError) => {
+      if (completedThreadId !== sessionId) return;
+      if (turnId && completedTurnId !== turnId) return;
       if (!promptSent) return;
+      if (finished) return;
+      finished = true;
       
       if (updateInterval) {
         clearInterval(updateInterval);
@@ -167,12 +172,6 @@ export async function runPrompt(
       
       (async () => {
         try {
-          if (hasSessionError) {
-            sseClient.disconnect();
-            sessionManager.clearSseClient(threadId);
-            return;
-          }
-
           const disabledButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
               new ButtonBuilder()
@@ -182,7 +181,16 @@ export async function runPrompt(
                 .setDisabled(true)
             );
 
-          if (!accumulatedText.trim()) {
+          if (turnError) {
+            hasSessionError = true;
+            const edited = await updateStreamMessage(
+              `${contextHeader}\n📌 **Prompt**: ${prompt}\n\n❌ **Error**: ${turnError.message}`,
+              [disabledButtons]
+            );
+            if (!edited) {
+              await safeSend(`❌ **Error**: ${turnError.message}`);
+            }
+          } else if (!accumulatedText.trim()) {
             const edited = await updateStreamMessage(
               `${contextHeader}\n📌 **Prompt**: ${prompt}\n\n⚠️ No output received — the model may have encountered an issue.`,
               [disabledButtons]
@@ -208,10 +216,21 @@ export async function runPrompt(
             await safeSend('✅ Done');
           }
           
-          sseClient.disconnect();
-          sessionManager.clearSseClient(threadId);
+          codexClient.disconnect();
+          sessionManager.clearCodexClient(threadId);
+          sessionManager.clearActiveTurn(threadId);
           
-          await processNextInQueue(channel, threadId, parentChannelId);
+          if (turnError) {
+            const settings = dataStore.getQueueSettings(threadId);
+            if (settings.continueOnFailure) {
+              await processNextInQueue(channel, threadId, parentChannelId);
+            } else {
+              dataStore.clearQueue(threadId);
+              await safeSend('❌ Execution failed. Queue cleared. Use `/queue settings` to change this behavior.');
+            }
+          } else {
+            await processNextInQueue(channel, threadId, parentChannelId);
+          }
         } catch (error) {
           console.error('Error in onSessionIdle:', error);
           await safeSend('❌ An unexpected error occurred while processing the response.');
@@ -219,55 +238,9 @@ export async function runPrompt(
       })();
     });
     
-    sseClient.onSessionError((errorSessionId, errorInfo) => {
-      if (errorSessionId !== sessionId) return;
-      if (!promptSent) return;
-      
-      hasSessionError = true;
-      
-      if (updateInterval) {
-        clearInterval(updateInterval);
-        updateInterval = null;
-      }
-      
-      (async () => {
-        try {
-          const errorMsg = errorInfo.data?.message || errorInfo.name || 'Unknown error';
-          const disabledButtons = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-              new ButtonBuilder()
-                .setCustomId(`interrupt_${threadId}`)
-                .setLabel('⏸️ Interrupt')
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(true)
-            );
-          
-          const edited = await updateStreamMessage(
-            `${contextHeader}\n📌 **Prompt**: ${prompt}\n\n❌ **Error**: ${errorMsg}`,
-            [disabledButtons]
-          );
-          if (!edited) {
-            await safeSend(`❌ **Error**: ${errorMsg}`);
-          }
-          
-          sseClient.disconnect();
-          sessionManager.clearSseClient(threadId);
-          
-          const settings = dataStore.getQueueSettings(threadId);
-          if (settings.continueOnFailure) {
-            await processNextInQueue(channel, threadId, parentChannelId);
-          } else {
-            dataStore.clearQueue(threadId);
-            await safeSend('❌ Execution failed. Queue cleared. Use `/queue settings` to change this behavior.');
-          }
-        } catch (error) {
-          console.error('Error in onSessionError:', error);
-          await safeSend('❌ An unexpected error occurred while handling a session error.');
-        }
-      })();
-    });
-    
-    sseClient.onError((error) => {
+    codexClient.onError((error) => {
+      if (finished) return;
+      finished = true;
       if (updateInterval) {
         clearInterval(updateInterval);
         updateInterval = null;
@@ -280,8 +253,9 @@ export async function runPrompt(
             await safeSend(`❌ Connection error: ${error.message}`);
           }
           
-          sseClient.disconnect();
-          sessionManager.clearSseClient(threadId);
+          codexClient.disconnect();
+          sessionManager.clearCodexClient(threadId);
+          sessionManager.clearActiveTurn(threadId);
           
           const settings = dataStore.getQueueSettings(threadId);
           if (settings.continueOnFailure) {
@@ -291,7 +265,7 @@ export async function runPrompt(
             await safeSend('❌ Execution failed. Queue cleared. Use `/queue settings` to change this behavior.');
           }
         } catch (handlerError) {
-          console.error('Error in SSE onError handler:', handlerError);
+          console.error('Error in Codex app-server error handler:', handlerError);
           await safeSend('❌ An unexpected connection error occurred.');
         }
       })();
@@ -317,7 +291,8 @@ export async function runPrompt(
     }, 1000);
     
     await updateStreamMessage(`${contextHeader}\n📌 **Prompt**: ${prompt}\n\n📝 Sending prompt...`, [buttons]);
-    await sessionManager.sendPrompt(port, sessionId, prompt, preferredModel);
+    turnId = await sessionManager.sendPrompt(port, sessionId, prompt, preferredModel);
+    sessionManager.setActiveTurn(threadId, turnId);
     promptSent = true;
     
   } catch (error) {
@@ -326,16 +301,17 @@ export async function runPrompt(
     }
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const edited = await updateStreamMessage(`${contextHeader}\n📌 **Prompt**: ${prompt}\n\n❌ OpenCode execution failed: ${errorMessage}`, []);
+    const edited = await updateStreamMessage(`${contextHeader}\n📌 **Prompt**: ${prompt}\n\n❌ Codex execution failed: ${errorMessage}`, []);
     if (!edited) {
-      await safeSend(`❌ OpenCode execution failed: ${errorMessage}`);
+      await safeSend(`❌ Codex execution failed: ${errorMessage}`);
     }
     
-    const client = sessionManager.getSseClient(threadId);
+    const client = sessionManager.getCodexClient(threadId);
     if (client) {
       client.disconnect();
-      sessionManager.clearSseClient(threadId);
+      sessionManager.clearCodexClient(threadId);
     }
+    sessionManager.clearActiveTurn(threadId);
     
     const settings = dataStore.getQueueSettings(threadId);
     if (settings.continueOnFailure) {

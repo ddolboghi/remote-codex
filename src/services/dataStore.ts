@@ -1,16 +1,21 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import type { DataStore, ProjectConfig, ChannelBinding, ThreadSession, WorktreeMapping, PassthroughThread, QueuedMessage, QueueSettings } from '../types/index.js';
 import { sanitizeModel } from '../utils/stringUtils.js';
 
 
-const CONFIG_DIR = join(homedir(), '.remote-opencode');
+const CONFIG_DIR = join(homedir(), '.remote-codex');
+const LEGACY_CONFIG_DIR = join(homedir(), '.remote-opencode');
 const DATA_FILE = join(CONFIG_DIR, 'data.json');
+const LEGACY_DATA_FILE = join(LEGACY_CONFIG_DIR, 'data.json');
 
 function ensureDataDir() {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
+  }
+  if (!existsSync(DATA_FILE) && existsSync(LEGACY_DATA_FILE)) {
+    copyFileSync(LEGACY_DATA_FILE, DATA_FILE);
   }
 }
 
@@ -292,4 +297,3 @@ export function updateQueueSettings(threadId: string, settings: Partial<QueueSet
   };
   saveData(data);
 }
-

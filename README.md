@@ -1,18 +1,18 @@
-# remote-opencode
+# remote-codex
 
 > Control your AI coding assistant from anywhere — your phone, tablet, or another computer.
 
-![npm](https://img.shields.io/npm/dt/remote-opencode) 📦 Used by developers worldwide — **2,000+ weekly downloads** on npm
+![npm](https://img.shields.io/npm/dt/remote-codex) 📦 Used by developers worldwide — **2,000+ weekly downloads** on npm
 
 <div align="center">
-<img width="1024" alt="remote-opencode logo" src="./asset/remo-code-logo.png" />
+<img width="1024" alt="remote-codex logo" src="./asset/remo-code-logo.png" />
 </div>
 
-> 🆕 **New in v1.5!** Session management — browse, attach, and manage OpenCode CLI sessions from Discord with `/session`. Plus: model autocomplete for `/model set`. [See changelog](#changelog)
+> 🆕 **New in v1.5!** Session management — browse, attach, and manage Codex CLI sessions from Discord with `/session`. Plus: model autocomplete for `/model set`. [See changelog](#changelog)
 >
 > 🎤 **v1.4:** Voice message support — send voice messages that are automatically transcribed and processed. [See demo](#-voice-mode-demo)
 
-**remote-opencode** is a Discord bot that bridges your local [OpenCode CLI](https://github.com/sst/opencode) to Discord, enabling you to interact with your AI coding assistant remotely. Perfect for developers who want to:
+**remote-codex** is a Discord bot that bridges your local [Codex CLI](https://github.com/sst/codex) to Discord, enabling you to interact with your AI coding assistant remotely. Perfect for developers who want to:
 
 - 📱 **Code from mobile** — Send coding tasks from your phone while away from your desk
 - 💻 **Access from any device** — Use your powerful dev machine from a laptop or tablet
@@ -29,12 +29,12 @@ flowchart LR
 
     subgraph Workflow
         direction TB
-        B --> C["💻 OpenCode CLI"]
+        B --> C["💻 Codex CLI"]
         C --> D["📁 Your Codebase"]
     end
 ```
 
-The bot runs on your development machine alongside OpenCode. When you send a command via Discord, it's forwarded to OpenCode, and the output streams back to you in real-time.
+The bot runs on your development machine alongside Codex. When you send a command via Discord, it's forwarded to Codex, and the output streams back to you in real-time.
 
 ## Demo
 
@@ -69,27 +69,27 @@ https://github.com/user-attachments/assets/59cf162a-ec86-41b5-a1f3-9b1379acd9fd
 ### Prerequisites
 
 - **Node.js 22+** — [Download](https://nodejs.org/)
-- **OpenCode CLI** — Must be installed and working on your machine
+- **Codex CLI** — Must be installed and working on your machine
 - **Discord Account** — With a server where you have admin permissions
 
 ### Install via npm
 
 ```bash
 # Global installation (recommended)
-npm install -g remote-opencode
+npm install -g remote-codex
 
 # Or run directly with npx
-npx remote-opencode
+npx remote-codex
 ```
 
 ### Install from source
 
 ```bash
-git clone https://github.com/RoundTable02/remote-opencode.git
-cd remote-opencode
+git clone https://github.com/RoundTable02/remote-codex.git
+cd remote-codex
 npm install
 npm run build
-npm link  # Makes 'remote-opencode' available globally
+npm link  # Makes 'remote-codex' available globally
 ```
 
 ---
@@ -98,19 +98,19 @@ npm link  # Makes 'remote-opencode' available globally
 
 ```bash
 # Step 1: Run the interactive setup wizard
-remote-opencode setup
+remote-codex setup
 
 # Step 2: Start the Discord bot
-remote-opencode start
+remote-codex start
 ```
 
-That's it! Now use Discord slash commands to interact with OpenCode.
+That's it! Now use Discord slash commands to interact with Codex.
 
 ---
 
 ## Proxy Support
 
-`remote-opencode` supports HTTP proxy environments for Discord and other external API requests.
+`remote-codex` supports HTTP proxy environments for Discord and other external API requests.
 
 Supported environment variables:
 
@@ -119,35 +119,35 @@ Supported environment variables:
 - `ALL_PROXY`
 - `NO_PROXY`
 
-Proxy settings are applied app-wide. Local OpenCode traffic is kept direct automatically, so `localhost`, `127.0.0.1`, and `::1` are always excluded from proxying.
+Proxy settings are applied app-wide. Local Codex traffic is kept direct automatically, so `localhost`, `127.0.0.1`, and `::1` are always excluded from proxying.
 
 ### Example
 
 ```bash
 export HTTPS_PROXY=http://proxy.company.local:8080
 export NO_PROXY=internal.company.local
-remote-opencode start
+remote-codex start
 ```
 
 If your network uses a single proxy for everything, `ALL_PROXY` is also supported:
 
 ```bash
 export ALL_PROXY=http://proxy.company.local:8080
-remote-opencode start
+remote-codex start
 ```
 
 ---
 
 ## Discord Bot Setup
 
-The setup wizard (`remote-opencode setup`) guides you through the entire process interactively:
+The setup wizard (`remote-codex setup`) guides you through the entire process interactively:
 
 1. **Opens Discord Developer Portal** in your browser
 2. **Walks you through** creating an application, enabling intents, and getting your bot token
 3. **Generates the invite link** automatically and opens it in your browser
 4. **Deploys slash commands** to your server
 
-Just run `remote-opencode setup` and follow the prompts — no manual URL copying needed!
+Just run `remote-codex setup` and follow the prompts — no manual URL copying needed!
 
 <details>
 <summary>📖 Manual setup reference (click to expand)</summary>
@@ -171,19 +171,19 @@ If you prefer manual setup or need to troubleshoot:
 
 | Command                                 | Description                                          |
 | --------------------------------------- | ---------------------------------------------------- |
-| `remote-opencode`                       | Start the bot (shows setup guide if not configured)  |
-| `remote-opencode setup`                 | Interactive setup wizard — configures bot token, IDs |
-| `remote-opencode start`                 | Start the Discord bot                                |
-| `remote-opencode deploy`                | Deploy/update slash commands to Discord              |
-| `remote-opencode undeploy`              | Remove slash commands from Discord                  |
-| `remote-opencode config`                | Display current configuration info                   |
-| `remote-opencode allow add <userId>`    | Add a Discord user ID to the allowlist               |
-| `remote-opencode allow remove <userId>` | Remove a Discord user ID from the allowlist          |
-| `remote-opencode allow list`            | List all user IDs in the allowlist                   |
-| `remote-opencode allow reset`           | Clear the entire allowlist (removes access control)  |
-| `remote-opencode voice set <apiKey>`    | Set OpenAI API key for voice message transcription   |
-| `remote-opencode voice remove`          | Remove the stored OpenAI API key                     |
-| `remote-opencode voice status`          | Show voice transcription status and API key source   |
+| `remote-codex`                       | Start the bot (shows setup guide if not configured)  |
+| `remote-codex setup`                 | Interactive setup wizard — configures bot token, IDs |
+| `remote-codex start`                 | Start the Discord bot                                |
+| `remote-codex deploy`                | Deploy/update slash commands to Discord              |
+| `remote-codex undeploy`              | Remove slash commands from Discord                  |
+| `remote-codex config`                | Display current configuration info                   |
+| `remote-codex allow add <userId>`    | Add a Discord user ID to the allowlist               |
+| `remote-codex allow remove <userId>` | Remove a Discord user ID from the allowlist          |
+| `remote-codex allow list`            | List all user IDs in the allowlist                   |
+| `remote-codex allow reset`           | Clear the entire allowlist (removes access control)  |
+| `remote-codex voice set <apiKey>`    | Set OpenAI API key for voice message transcription   |
+| `remote-codex voice remove`          | Remove the stored OpenAI API key                     |
+| `remote-codex voice status`          | Show voice transcription status and API key source   |
 
 ---
 
@@ -220,14 +220,14 @@ Set which project a Discord channel should interact with.
 /use alias:myapp
 ```
 
-After binding, all `/opencode` commands in that channel will work on the specified project.
+After binding, all `/codex` commands in that channel will work on the specified project.
 
-### `/opencode` — Send Command to AI
+### `/codex` — Send Command to AI
 
-The main command — sends a prompt to OpenCode and streams the response.
+The main command — sends a prompt to Codex and streams the response.
 
 ```
-/opencode prompt:Add a dark mode toggle to the settings page
+/codex prompt:Add a dark mode toggle to the settings page
 ```
 
 **Features:**
@@ -261,7 +261,7 @@ This is perfect for working on multiple features simultaneously without branch s
 
 ### `/code` — Toggle Passthrough Mode
 
-Enable passthrough mode in a thread to send messages directly to OpenCode without slash commands.
+Enable passthrough mode in a thread to send messages directly to Codex without slash commands.
 
 ```
 /code
@@ -270,7 +270,7 @@ Enable passthrough mode in a thread to send messages directly to OpenCode withou
 **How it works:**
 
 1. Run `/code` in any thread to enable passthrough mode
-2. Type messages naturally — they're sent directly to OpenCode
+2. Type messages naturally — they're sent directly to Codex
 3. Run `/code` again to disable
 
 **Example:**
@@ -278,7 +278,7 @@ Enable passthrough mode in a thread to send messages directly to OpenCode withou
 ```
 You: /code
 Bot: ✅ Passthrough mode enabled for this thread.
-     Your messages will be sent directly to OpenCode.
+     Your messages will be sent directly to Codex.
 
 You: Add a dark mode toggle to settings
 Bot: 📌 Prompt: Add a dark mode toggle to settings
@@ -301,7 +301,7 @@ Bot: ❌ Passthrough mode disabled.
 
 ### `/autowork` — Toggle Automatic Worktree Creation
 
-Enable automatic worktree creation for a project. When enabled, new `/opencode` sessions will automatically create isolated git worktrees.
+Enable automatic worktree creation for a project. When enabled, new `/codex` sessions will automatically create isolated git worktrees.
 
 ```
 /autowork
@@ -335,7 +335,7 @@ Control the automated job queue for the current thread.
 
 **How it works:**
 
-1. Send multiple messages to a thread (or use `/opencode` multiple times)
+1. Send multiple messages to a thread (or use `/codex` multiple times)
 2. If the bot is busy, it reacts with `📥` and adds the task to the queue
 3. Once the current job is done, the bot automatically picks up the next one
 
@@ -417,7 +417,7 @@ Manage voice message transcription settings. Requires an OpenAI API key (set via
 
 **How it works:**
 
-1. Set your OpenAI API key via CLI: `remote-opencode voice set <apiKey>`
+1. Set your OpenAI API key via CLI: `remote-codex voice set <apiKey>`
 2. Enable passthrough mode in a thread with `/code`
 3. Send a voice message using Discord's 🎤 button
 4. The bot adds a 🎙️ reaction, transcribes the audio via OpenAI Whisper, and processes it as a text prompt
@@ -452,7 +452,7 @@ View available AI models or set the model for the current channel.
 
 ### `/session` — Browse & Manage Sessions
 
-Browse OpenCode CLI sessions and manage session-thread mappings. Useful for resuming previous conversations or sharing sessions across threads.
+Browse Codex CLI sessions and manage session-thread mappings. Useful for resuming previous conversations or sharing sessions across threads.
 
 ```
 /session list
@@ -481,8 +481,8 @@ Browse OpenCode CLI sessions and manage session-thread mappings. Useful for resu
 - 📋 **Merged view** — combines active server sessions with persisted thread mappings
 - 🔗 **Interactive attach** — dropdown menu shows session title, ID, mapping status, and recency
 - ⚠️ **Cross-thread warning** — notifies when attaching a session already used in another thread
-- 📊 **Rich info embed** — session status, port, SSE state, timestamps in a clean embed
-- 🧹 **Clean detach** — properly disconnects SSE and clears session mapping
+- 📊 **Rich info embed** — session status, port, Codex stream state, timestamps in a clean embed
+- 🧹 **Clean detach** — properly disconnects Codex stream and clears session mapping
 
 ---
 
@@ -505,12 +505,12 @@ Browse OpenCode CLI sessions and manage session-thread mappings. Useful for resu
 3. **Start coding remotely:**
 
    ```
-   /opencode prompt:Refactor the authentication module to use JWT
+   /codex prompt:Refactor the authentication module to use JWT
    ```
 
 4. **Continue the conversation** in the created thread:
    ```
-   /opencode prompt:Now add refresh token support
+   /codex prompt:Now add refresh token support
    ```
 
 ### Mobile Workflow
@@ -519,7 +519,7 @@ Perfect for when you're away from your desk:
 
 1. 📱 Open Discord on your phone
 2. Navigate to your bound channel
-3. Use `/opencode` to send tasks
+3. Use `/codex` to send tasks
 4. Watch real-time progress
 5. Use the **Interrupt** button if needed
 
@@ -557,7 +557,7 @@ Perfect for "setting and forgetting" several tasks:
 
 ## Access Control
 
-remote-opencode supports an optional **user allowlist** to restrict who can interact with the bot. This is essential when your bot runs in a shared Discord server where untrusted users could otherwise execute commands on your machine.
+remote-codex supports an optional **user allowlist** to restrict who can interact with the bot. This is essential when your bot runs in a shared Discord server where untrusted users could otherwise execute commands on your machine.
 
 ### How It Works
 
@@ -571,7 +571,7 @@ remote-opencode supports an optional **user allowlist** to restrict who can inte
 #### Option 1: Setup Wizard (Recommended for first-time setup)
 
 ```bash
-remote-opencode setup
+remote-codex setup
 ```
 
 Step 5 of the wizard prompts you to enter your Discord user ID. This becomes the first entry in the allowlist.
@@ -580,10 +580,10 @@ Step 5 of the wizard prompts you to enter your Discord user ID. This becomes the
 
 ```bash
 # Add your Discord user ID
-remote-opencode allow add 123456789012345678
+remote-codex allow add 123456789012345678
 
 # Verify
-remote-opencode allow list
+remote-codex allow list
 ```
 
 ### Managing the Allowlist
@@ -599,10 +599,10 @@ Once at least one user is on the allowlist, authorized users can manage it from 
 Or via CLI at any time:
 
 ```bash
-remote-opencode allow add <userId>
-remote-opencode allow remove <userId>
-remote-opencode allow list
-remote-opencode allow reset    # Clears entire allowlist (disables access control)
+remote-codex allow add <userId>
+remote-codex allow remove <userId>
+remote-codex allow list
+remote-codex allow reset    # Clears entire allowlist (disables access control)
 ```
 
 ### Safety Guardrails
@@ -616,7 +616,7 @@ remote-opencode allow reset    # Clears entire allowlist (disables access contro
 
 ## Configuration
 
-All configuration is stored in `~/.remote-opencode/`:
+All configuration is stored in `~/.remote-codex/`:
 
 | File          | Purpose                                       |
 | ------------- | --------------------------------------------- |
@@ -672,7 +672,7 @@ All configuration is stored in `~/.remote-opencode/`:
    - Read Message History
 3. **Redeploy commands:**
    ```bash
-   remote-opencode deploy
+   remote-codex deploy
    ```
 
 ### "No project set for this channel"
@@ -690,13 +690,13 @@ Slash commands can take up to an hour to propagate globally. For faster updates:
 
 1. Kick the bot from your server
 2. Re-invite it
-3. Run `remote-opencode deploy`
+3. Run `remote-codex deploy`
 
-### OpenCode server errors
+### Codex server errors
 
-1. **Verify OpenCode is installed:**
+1. **Verify Codex is installed:**
    ```bash
-   opencode --version
+   codex --version
    ```
 2. **Check if another process is using the port**
 3. **Ensure the project path exists and is accessible**
@@ -705,8 +705,8 @@ Slash commands can take up to an hour to propagate globally. For faster updates:
 
 The bot maintains persistent sessions. If you encounter issues:
 
-1. Start a new thread with `/opencode` instead of continuing in an old one
-2. Restart the bot: `remote-opencode start`
+1. Start a new thread with `/codex` instead of continuing in an old one
+2. Restart the bot: `remote-codex start`
 
 ### Bot crashes on startup
 
@@ -716,11 +716,11 @@ The bot maintains persistent sessions. If you encounter issues:
    ```
 2. **Verify configuration:**
    ```bash
-   remote-opencode config
+   remote-codex config
    ```
 3. **Re-run setup:**
    ```bash
-   remote-opencode setup
+   remote-codex setup
    ```
 
 ### Proxy environments still fail
@@ -736,8 +736,8 @@ The bot maintains persistent sessions. If you encounter issues:
 ### Run from source
 
 ```bash
-git clone https://github.com/RoundTable02/remote-opencode.git
-cd remote-opencode
+git clone https://github.com/RoundTable02/remote-codex.git
+cd remote-codex
 npm install
 
 # Development mode (with ts-node)
@@ -762,7 +762,7 @@ src/
 ├── cli.ts                 # CLI entry point
 ├── bot.ts                 # Discord client initialization
 ├── commands/              # Slash command definitions
-│   ├── opencode.ts        # Main AI interaction command
+│   ├── codex.ts        # Main AI interaction command
 │   ├── code.ts            # Passthrough mode toggle
 │   ├── work.ts            # Worktree management
 │   ├── diff.ts            # Git diff viewer
@@ -778,12 +778,12 @@ src/
 │   ├── buttonHandler.ts
 │   └── messageHandler.ts  # Passthrough + voice message handling
 ├── services/              # Core business logic
-│   ├── serveManager.ts    # OpenCode process management
+│   ├── serveManager.ts    # Codex process management
 │   ├── sessionManager.ts  # Session state management
 │   ├── queueManager.ts    # Automated job queuing (incl. voice)
 │   ├── executionService.ts # Core prompt execution logic
 │   ├── voiceService.ts    # Voice message STT (OpenAI Whisper)
-│   ├── sseClient.ts       # Real-time event streaming
+│   ├── codexAppClient.ts  # Codex app-server WebSocket client
 │   ├── dataStore.ts       # Persistent storage
 │   ├── configStore.ts     # Bot configuration
 │   └── worktreeManager.ts # Git worktree operations
@@ -805,11 +805,11 @@ See [CHANGELOG.md](CHANGELOG.md) for a full history of changes.
 
 #### Added
 
-- **Proxy Support**: HTTP proxy environments for Discord requests via `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY`. Local OpenCode traffic is automatically excluded.
+- **Proxy Support**: HTTP proxy environments for Discord requests via `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY`. Local Codex traffic is automatically excluded.
 
 #### Fixed
 
-- **Shell Spawn Removed**: OpenCode is now launched directly instead of through a shell, fixing service-environment failures.
+- **Shell Spawn Removed**: Codex is now launched directly instead of through a shell, fixing service-environment failures.
 - **Silent Error Swallowing**: Discord message edit failures now fall back to sending new messages instead of silently dropping AI responses.
 - **Model Provider Prefix**: `/model set` no longer strips the provider prefix, fixing "Model not found" errors. Carriage returns in model names are now sanitized.
 
@@ -817,7 +817,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a full history of changes.
 
 #### Added
 
-- **`/session` Command**: Browse, attach, detach, and inspect OpenCode CLI sessions from Discord — resume previous conversations or share sessions across threads.
+- **`/session` Command**: Browse, attach, detach, and inspect Codex CLI sessions from Discord — resume previous conversations or share sessions across threads.
 - **Model Autocomplete**: `/model set` now suggests model names as you type.
 - **Full Model List**: `/model list` shows all available models without per-provider caps.
 
@@ -831,7 +831,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a full history of changes.
 
 - **Voice Message Transcription**: Send voice messages in `/code` passthrough threads — automatically transcribed via OpenAI Whisper and processed as text prompts.
 - **`/voice` Slash Command**: Check status and manage voice transcription settings from Discord.
-- **CLI Voice Management**: `remote-opencode voice set|remove|status` commands for managing the OpenAI API key.
+- **CLI Voice Management**: `remote-codex voice set|remove|status` commands for managing the OpenAI API key.
 - **Setup Wizard Integration**: Optional step to configure voice transcription during initial setup.
 
 ### [1.3.0] - 2026-03-02
@@ -846,7 +846,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a full history of changes.
 
 - **Owner/Admin Authentication**: User allowlist system to restrict bot access to authorized Discord users only.
 - **`/allow` Slash Command**: Manage the allowlist directly from Discord (add, remove, list users).
-- **CLI Allowlist Management**: `remote-opencode allow add|remove|list|reset` commands for managing access control from the terminal.
+- **CLI Allowlist Management**: `remote-codex allow add|remove|list|reset` commands for managing access control from the terminal.
 - **Setup Wizard Integration**: Step 5 prompts for owner Discord user ID during initial setup.
 
 #### Security
@@ -867,11 +867,11 @@ See [CHANGELOG.md](CHANGELOG.md) for a full history of changes.
 
 #### Added
 
-- New `/setports` slash command to configure the port range for OpenCode server instances.
+- New `/setports` slash command to configure the port range for Codex server instances.
 
 #### Fixed
 
-- Fixed Windows-specific spawning issue (targeting `opencode.cmd`).
+- Fixed Windows-specific spawning issue (targeting `codex.cmd`).
 - Resolved `spawn EINVAL` errors on Windows.
 - Improved server reliability and suppressed `DEP0190` security warnings.
 
@@ -880,7 +880,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a full history of changes.
 #### Added
 
 - New `/model` slash command to set AI models per channel.
-- Support for `--model` flag in OpenCode server instances.
+- Support for `--model` flag in Codex server instances.
 
 #### Fixed
 

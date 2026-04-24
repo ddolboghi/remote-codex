@@ -26,8 +26,8 @@ updateNotifier({ pkg }).notify({ isGlobal: true });
 const program = new Command();
 
 program
-  .name('remote-opencode')
-  .description('Discord bot for remote OpenCode CLI access')
+  .name('remote-codex')
+  .description('Discord bot for remote Codex CLI access')
   .version(pkg.version);
 
 program
@@ -36,7 +36,7 @@ program
   .action(async () => {
     if (!hasBotConfig()) {
       console.log(pc.yellow('No bot configuration found.'));
-      console.log(`Run ${pc.cyan('remote-opencode setup')} first to configure your Discord bot.\n`);
+      console.log(`Run ${pc.cyan('remote-codex setup')} first to configure your Discord bot.\n`);
       process.exit(1);
     }
     
@@ -62,7 +62,7 @@ program
   .action(async () => {
     if (!hasBotConfig()) {
       console.log(pc.yellow('No bot configuration found.'));
-      console.log(`Run ${pc.cyan('remote-opencode setup')} first.\n`);
+      console.log(`Run ${pc.cyan('remote-codex setup')} first.\n`);
       process.exit(1);
     }
     
@@ -75,7 +75,7 @@ program
   .action(async () => {
     if (!hasBotConfig()) {
       console.log(pc.yellow('No bot configuration found.'));
-      console.log(`Run ${pc.cyan('remote-opencode setup')} first.\n`);
+      console.log(`Run ${pc.cyan('remote-codex setup')} first.\n`);
       process.exit(1);
     }
     
@@ -187,15 +187,15 @@ voiceCmd
 program
   .action(async () => {
     if (!hasBotConfig()) {
-      console.log(pc.bold('\nWelcome to remote-opencode!\n'));
+      console.log(pc.bold('\nWelcome to remote-codex!\n'));
       console.log('It looks like this is your first time running the bot.');
-      console.log(`Run ${pc.cyan('remote-opencode setup')} to configure your Discord bot.\n`);
+      console.log(`Run ${pc.cyan('remote-codex setup')} to configure your Discord bot.\n`);
       console.log('Available commands:');
-      console.log(`  ${pc.cyan('remote-opencode setup')}   - Interactive setup wizard`);
-      console.log(`  ${pc.cyan('remote-opencode start')}   - Start the bot`);
-      console.log(`  ${pc.cyan('remote-opencode deploy')}  - Deploy slash commands`);
-      console.log(`  ${pc.cyan('remote-opencode undeploy')} - Remove slash commands`);
-      console.log(`  ${pc.cyan('remote-opencode config')}  - Show configuration`);
+      console.log(`  ${pc.cyan('remote-codex setup')}   - Interactive setup wizard`);
+      console.log(`  ${pc.cyan('remote-codex start')}   - Start the bot`);
+      console.log(`  ${pc.cyan('remote-codex deploy')}  - Deploy slash commands`);
+      console.log(`  ${pc.cyan('remote-codex undeploy')} - Remove slash commands`);
+      console.log(`  ${pc.cyan('remote-codex config')}  - Show configuration`);
       console.log();
       process.exit(0);
     }

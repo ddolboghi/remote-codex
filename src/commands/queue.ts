@@ -78,8 +78,8 @@ export const queue: Command = {
       // Try to trigger next if idle
       const parentChannelId = (thread as ThreadChannel).parentId;
       if (parentChannelId) {
-        const sseClient = (await import('../services/sessionManager.js')).getSseClient(threadId);
-        if (!sseClient || !sseClient.isConnected()) {
+        const codexClient = (await import('../services/sessionManager.js')).getCodexClient(threadId);
+        if (!codexClient || !codexClient.isConnected()) {
           await processNextInQueue(thread as any, threadId, parentChannelId);
         }
       }

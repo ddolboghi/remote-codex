@@ -23,22 +23,22 @@ describe('queueManager', () => {
   });
 
   describe('isBusy', () => {
-    it('should return true if sseClient is connected', () => {
-      vi.mocked(sessionManager.getSseClient).mockReturnValue({
+    it('should return true if Codex client is connected', () => {
+      vi.mocked(sessionManager.getCodexClient).mockReturnValue({
         isConnected: () => true
       } as any);
       expect(isBusy(threadId)).toBe(true);
     });
 
-    it('should return false if sseClient is not connected', () => {
-      vi.mocked(sessionManager.getSseClient).mockReturnValue({
+    it('should return false if Codex client is not connected', () => {
+      vi.mocked(sessionManager.getCodexClient).mockReturnValue({
         isConnected: () => false
       } as any);
       expect(isBusy(threadId)).toBe(false);
     });
 
-    it('should return false if sseClient is missing', () => {
-      vi.mocked(sessionManager.getSseClient).mockReturnValue(undefined);
+    it('should return false if Codex client is missing', () => {
+      vi.mocked(sessionManager.getCodexClient).mockReturnValue(undefined);
       expect(isBusy(threadId)).toBe(false);
     });
   });

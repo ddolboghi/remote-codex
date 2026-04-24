@@ -5,7 +5,7 @@ services:
     build:
       context: .
       target: production
-    container_name: discord-opencode-relay
+    container_name: discord-codex-relay
     restart: unless-stopped
     env_file:
       - .env

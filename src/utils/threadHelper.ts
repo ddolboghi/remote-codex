@@ -15,7 +15,7 @@ export async function getOrCreateThread(
     const thread = await (channel as TextChannel).threads.create({
       name: `🤖 ${threadName}`,
       autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
-      reason: 'OpenCode session'
+      reason: 'Codex session'
     });
     return thread;
   }

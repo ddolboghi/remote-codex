@@ -24,8 +24,8 @@ export async function startBot(): Promise<void> {
   
   client.once(Events.ClientReady, (c) => {
     console.log(pc.green(`Ready! Logged in as ${pc.bold(c.user.tag)}`));
-    // Pre-warm model cache so autocomplete never hits cold execSync
-    try { getCachedModels(); } catch { }
+    // Pre-warm model cache so autocomplete is less likely to hit a cold request.
+    getCachedModels().catch(() => {});
   });
   
   client.on(Events.InteractionCreate, handleInteraction);
@@ -35,7 +35,7 @@ export async function startBot(): Promise<void> {
     console.log(pc.yellow(`\n${signal} received. Shutting down gracefully...`));
     
     serveManager.stopAll();
-    console.log(pc.dim('All opencode serve instances stopped.'));
+    console.log(pc.dim('All Codex app-server instances stopped.'));
     
     client.destroy();
     console.log(pc.dim('Discord client destroyed.'));

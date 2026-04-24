@@ -10,7 +10,7 @@ import type { Command } from './index.js';
 export const code: Command = {
   data: new SlashCommandBuilder()
     .setName('code')
-    .setDescription('Toggle passthrough mode - send messages directly to OpenCode') as SlashCommandBuilder,
+    .setDescription('Toggle passthrough mode - send messages directly to Codex') as SlashCommandBuilder,
   
   async execute(interaction: ChatInputCommandInteraction) {
     const channel = interaction.channel;
@@ -50,11 +50,11 @@ export const code: Command = {
     
     if (newState) {
       await interaction.reply({
-        content: '✅ **Passthrough mode enabled** for this thread.\nYour messages will be sent directly to OpenCode.',
+        content: '✅ **Passthrough mode enabled** for this thread.\nYour messages will be sent directly to Codex.',
       });
     } else {
       await interaction.reply({
-        content: '❌ **Passthrough mode disabled.**\nUse `/opencode prompt:"..."` to send commands.',
+        content: '❌ **Passthrough mode disabled.**\nUse `/codex prompt:"..."` to send commands.',
       });
     }
   }

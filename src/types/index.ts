@@ -37,18 +37,6 @@ export interface QueueSettings {
 }
 
 
-export interface TextPart {
-  id: string;
-  sessionID: string;
-  messageID: string;
-  text: string;
-}
-
-export interface SSEEvent {
-  type: string;
-  properties: Record<string, unknown>;
-}
-
 export interface ServeInstance {
   port: number;
   process: ChildProcess;

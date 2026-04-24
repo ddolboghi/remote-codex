@@ -60,7 +60,7 @@ describe('serveManager', () => {
   });
 
   describe('spawnServe', () => {
-    it('should spawn opencode serve and return port', async () => {
+    it('should spawn codex app-server and return port', async () => {
       const mockProc = createMockProcess();
       vi.mocked(spawn).mockReturnValue(mockProc);
 
@@ -70,8 +70,8 @@ describe('serveManager', () => {
       expect(port).toBeGreaterThanOrEqual(14097);
       expect(port).toBeLessThanOrEqual(14200);
       expect(spawn).toHaveBeenCalledWith(
-        'opencode',
-        ['serve', '--port', port.toString()],
+        'codex',
+        ['app-server', '--listen', `ws://127.0.0.1:${port}`],
         expect.objectContaining({
           cwd: projectPath,
           stdio: ['inherit', 'pipe', 'pipe'],
@@ -82,9 +82,9 @@ describe('serveManager', () => {
       expect(spawnOptions).not.toHaveProperty('shell');
     });
 
-    it('should resolve opencode from PATH before spawning', async () => {
-      const tempDir = mkdtempSync(join(tmpdir(), 'remote-opencode-'));
-      const executableName = process.platform === 'win32' ? 'opencode.cmd' : 'opencode';
+    it('should resolve codex from PATH before spawning', async () => {
+      const tempDir = mkdtempSync(join(tmpdir(), 'remote-codex-'));
+      const executableName = process.platform === 'win32' ? 'codex.cmd' : 'codex';
       const resolvedPath = join(tempDir, executableName);
 
       writeFileSync(resolvedPath, '@echo off');
@@ -131,8 +131,8 @@ describe('serveManager', () => {
 
       expect(port).toBe(20000);
       expect(spawn).toHaveBeenCalledWith(
-        'opencode',
-        ['serve', '--port', '20000'],
+        'codex',
+        ['app-server', '--listen', 'ws://127.0.0.1:20000'],
         expect.anything()
       );
     });
@@ -165,7 +165,7 @@ describe('serveManager', () => {
       await serveManager.spawnServe(projectPath);
 
       // Simulate stderr output before exit
-      mockProc.stderr?.emit('data', Buffer.from('Error: opencode command not found'));
+      mockProc.stderr?.emit('data', Buffer.from('Error: codex command not found'));
       mockProc.emit('exit', 1, null);
 
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -173,7 +173,7 @@ describe('serveManager', () => {
       const state = serveManager.getInstanceState(projectPath);
       expect(state?.exited).toBe(true);
       expect(state?.exitCode).toBe(1);
-      expect(state?.exitError).toContain('opencode command not found');
+      expect(state?.exitError).toContain('codex command not found');
     });
 
     it('should track error message when process fails to spawn', async () => {
@@ -183,7 +183,7 @@ describe('serveManager', () => {
       const projectPath = process.cwd();
       await serveManager.spawnServe(projectPath);
 
-      const error = new Error('spawn opencode ENOENT') as NodeJS.ErrnoException;
+      const error = new Error('spawn codex ENOENT') as NodeJS.ErrnoException;
       error.code = 'ENOENT';
       mockProc.emit('error', error);
 
@@ -191,7 +191,7 @@ describe('serveManager', () => {
 
       const state = serveManager.getInstanceState(projectPath);
       expect(state?.exited).toBe(true);
-      expect(state?.exitError).toContain('OpenCode executable not found');
+      expect(state?.exitError).toContain('Codex executable not found');
     });
 
     it('should report missing project path when spawn fails with inaccessible cwd', async () => {
@@ -201,7 +201,7 @@ describe('serveManager', () => {
       const projectPath = '/definitely/missing/project-path';
       await serveManager.spawnServe(projectPath);
 
-      const error = new Error('spawn opencode ENOENT') as NodeJS.ErrnoException;
+      const error = new Error('spawn codex ENOENT') as NodeJS.ErrnoException;
       error.code = 'ENOENT';
       mockProc.emit('error', error);
 
@@ -314,7 +314,7 @@ describe('serveManager', () => {
       await vi.runAllTimersAsync();
       
       await expect(promise).resolves.toBeUndefined();
-      expect(fetch).toHaveBeenCalledWith('http://127.0.0.1:14097/session');
+      expect(fetch).toHaveBeenCalledWith('http://127.0.0.1:14097/readyz');
     });
 
     it('should retry if fetch fails or returns not ok', async () => {
@@ -338,7 +338,7 @@ describe('serveManager', () => {
 
       const promise = serveManager.waitForReady(14097, 1000);
       
-      const wrappedPromise = expect(promise).rejects.toThrow('Service at port 14097 failed to become ready within 1000ms. Check if \'opencode serve\' is working correctly.');
+      const wrappedPromise = expect(promise).rejects.toThrow('Service at port 14097 failed to become ready within 1000ms. Check if \'codex app-server\' is working correctly.');
 
       await vi.advanceTimersByTimeAsync(1500);
 
@@ -364,7 +364,7 @@ describe('serveManager', () => {
 
       // Now waitForReady should fail fast with the error message
       await expect(serveManager.waitForReady(port, 30000, projectPath)).rejects.toThrow(
-        'opencode serve failed to start: Error: Failed to bind to port'
+        'codex app-server failed to start: Error: Failed to bind to port'
       );
 
       vi.useFakeTimers();

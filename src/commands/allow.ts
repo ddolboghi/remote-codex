@@ -38,7 +38,7 @@ export const allow: Command = {
 
     if (currentList.length === 0) {
       await interaction.reply({
-        content: '⚠️ No allowlist configured. Use `remote-opencode allow add <userId>` or `remote-opencode setup` to set up access control first.',
+        content: '⚠️ No allowlist configured. Use `remote-codex allow add <userId>` or `remote-codex setup` to set up access control first.',
         flags: MessageFlags.Ephemeral
       });
       return;
@@ -68,7 +68,7 @@ export const allow: Command = {
 
       if (!removed) {
         const reason = currentList.length <= 1
-          ? 'Cannot remove the last allowed user. Use CLI `remote-opencode allow reset` to disable restrictions.'
+          ? 'Cannot remove the last allowed user. Use CLI `remote-codex allow reset` to disable restrictions.'
           : `<@${user.id}> is not on the allowlist.`;
         await interaction.reply({
           content: `❌ ${reason}`,

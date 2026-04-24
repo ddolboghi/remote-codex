@@ -1,10 +1,10 @@
 {
-  "name": "remote-opencode",
+  "name": "remote-codex",
   "version": "1.5.2",
-  "description": "Discord bot for remote OpenCode CLI access",
+  "description": "Discord bot for remote Codex app-server access",
   "main": "dist/src/index.js",
   "bin": {
-    "remote-opencode": "./dist/src/cli.js"
+    "remote-codex": "./dist/src/cli.js"
   },
   "files": [
     "dist",
@@ -26,7 +26,7 @@
   },
   "keywords": [
     "discord",
-    "opencode",
+    "codex",
     "cli",
     "remote",
     "bot"
@@ -36,13 +36,9 @@
   "type": "module",
   "dependencies": {
     "@clack/prompts": "^0.9.1",
-    "@types/eventsource": "^1.1.15",
     "commander": "^13.1.0",
     "discord.js": "^14.25.1",
-    "eventsource": "^4.1.0",
-    "node-pty": "^1.1.0",
     "open": "^10.1.0",
-    "opencode-antigravity-auth": "^1.4.6",
     "picocolors": "^1.1.1",
     "undici": "^6.23.0",
     "update-notifier": "^7.3.1"

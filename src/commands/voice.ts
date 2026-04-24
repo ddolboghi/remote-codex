@@ -39,7 +39,7 @@ export const voice: Command = {
 
       if (!configKey) {
         await interaction.reply({
-          content: '🎙️ Voice Transcription: **Disabled**\n  No OpenAI API key configured.\n  Use `remote-opencode voice set <key>` (CLI) or set `OPENAI_API_KEY` env var.',
+          content: '🎙️ Voice Transcription: **Disabled**\n  No OpenAI API key configured.\n  Use `remote-codex voice set <key>` (CLI) or set `OPENAI_API_KEY` env var.',
           flags: MessageFlags.Ephemeral,
         });
         return;

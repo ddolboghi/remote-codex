@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'node:fs';
+import { copyFileSync, readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -20,12 +20,17 @@ export interface AppConfig {
   openaiApiKey?: string;
 }
 
-const CONFIG_DIR = join(homedir(), '.remote-opencode');
+const CONFIG_DIR = join(homedir(), '.remote-codex');
+const LEGACY_CONFIG_DIR = join(homedir(), '.remote-opencode');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
+const LEGACY_CONFIG_FILE = join(LEGACY_CONFIG_DIR, 'config.json');
 
 function ensureConfigDir(): void {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  }
+  if (!existsSync(CONFIG_FILE) && existsSync(LEGACY_CONFIG_FILE)) {
+    copyFileSync(LEGACY_CONFIG_FILE, CONFIG_FILE);
   }
 }
 

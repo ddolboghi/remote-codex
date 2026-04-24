@@ -46,6 +46,6 @@ export async function processNextInQueue(
 }
 
 export function isBusy(threadId: string): boolean {
-  const sseClient = sessionManager.getSseClient(threadId);
-  return !!(sseClient && sseClient.isConnected());
+  const codexClient = sessionManager.getCodexClient(threadId);
+  return !!(codexClient && codexClient.isConnected());
 }

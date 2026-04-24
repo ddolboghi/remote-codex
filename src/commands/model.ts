@@ -5,40 +5,45 @@ import {
   MessageFlags,
   ThreadChannel
 } from 'discord.js';
-import { execSync, exec } from 'node:child_process';
 import * as dataStore from '../services/dataStore.js';
 import type { Command } from './index.js';
 import { sanitizeModel } from '../utils/stringUtils.js';
+import * as serveManager from '../services/serveManager.js';
+import { CodexAppClient } from '../services/codexAppClient.js';
 
 let cachedModels: string[] = [];
 let cacheTimestamp = 0;
-let refreshInFlight = false;
+let refreshInFlight: Promise<string[]> | null = null;
 const CACHE_TTL_MS = 30_000;
 
-function refreshCacheAsync(): void {
-  if (refreshInFlight) return;
-  refreshInFlight = true;
-  exec('opencode models', { encoding: 'utf-8', timeout: 5000 }, (error, stdout) => {
-    refreshInFlight = false;
-    if (!error && stdout) {
-      cachedModels = stdout.split('\n').map(sanitizeModel).filter(m => m);
-      cacheTimestamp = Date.now();
-    }
-  });
+async function fetchModels(projectPath = process.cwd()): Promise<string[]> {
+  const port = await serveManager.spawnServe(projectPath);
+  await serveManager.waitForReady(port, 30000, projectPath);
+
+  const client = new CodexAppClient(port);
+  try {
+    await client.connect();
+    return (await client.listModels()).map(sanitizeModel).filter(m => m);
+  } finally {
+    client.disconnect();
+  }
 }
 
-export function getCachedModels(): string[] {
+export async function getCachedModels(projectPath?: string): Promise<string[]> {
   const now = Date.now();
   if (now - cacheTimestamp > CACHE_TTL_MS || cachedModels.length === 0) {
-    if (cachedModels.length === 0) {
-      try {
-        const output = execSync('opencode models', { encoding: 'utf-8', timeout: 5000 });
-        cachedModels = output.split('\n').map(sanitizeModel).filter(m => m);
-        cacheTimestamp = now;
-      } catch { }
-    } else {
-      refreshCacheAsync();
+    if (!refreshInFlight) {
+      refreshInFlight = fetchModels(projectPath)
+        .then((models) => {
+          cachedModels = models;
+          cacheTimestamp = Date.now();
+          return models;
+        })
+        .finally(() => {
+          refreshInFlight = null;
+        });
     }
+    return refreshInFlight;
   }
   return cachedModels;
 }
@@ -65,7 +70,7 @@ export const model: Command = {
         .setDescription('Set the model to use in this channel')
         .addStringOption(option =>
           option.setName('name')
-            .setDescription('The model name (e.g., google/gemini-2.0-flash)')
+            .setDescription('The Codex model name (e.g., gpt-5.5)')
             .setRequired(true)
             .setAutocomplete(true))) as SlashCommandBuilder,
 
@@ -75,8 +80,9 @@ export const model: Command = {
     if (subcommand === 'list') {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       try {
-        const output = execSync('opencode models', { encoding: 'utf-8' });
-        const models = output.split('\n').map(sanitizeModel).filter(m => m);
+        const channelId = getEffectiveChannelId(interaction);
+        const projectPath = dataStore.getChannelProjectPath(channelId);
+        const models = await getCachedModels(projectPath);
         
         if (models.length === 0) {
           await interaction.editReply('No models found.');
@@ -86,7 +92,7 @@ export const model: Command = {
         // Group models by provider
         const groups: Record<string, string[]> = {};
         for (const m of models) {
-          const [provider] = m.split('/');
+          const provider = m.includes('/') ? m.split('/')[0] : 'codex';
           if (!groups[provider]) groups[provider] = [];
           groups[provider].push(m);
         }
@@ -120,7 +126,7 @@ export const model: Command = {
         }
       } catch (error) {
         console.error('Failed to list models:', error);
-        await interaction.editReply('❌ Failed to retrieve models from OpenCode CLI.');
+        await interaction.editReply('❌ Failed to retrieve models from Codex app-server.');
       }
     } else if (subcommand === 'set') {
       const modelName = interaction.options.getString('name', true);
@@ -138,7 +144,7 @@ export const model: Command = {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       try {
-        const availableModels = getCachedModels();
+        const availableModels = await getCachedModels(dataStore.getChannelProjectPath(channelId));
         if (availableModels.length > 0 && !availableModels.includes(modelName)) {
           await interaction.editReply(
             `❌ Model \`${modelName}\` not found.\nUse \`/model list\` to see available models.`
@@ -146,7 +152,7 @@ export const model: Command = {
           return;
         }
       } catch {
-        console.warn('[model] Could not validate model name against opencode models');
+        console.warn('[model] Could not validate model name against Codex app-server models');
       }
 
       dataStore.setChannelModel(channelId, modelName);
@@ -159,7 +165,7 @@ export const model: Command = {
 
   async autocomplete(interaction: AutocompleteInteraction) {
     const focused = interaction.options.getFocused().toLowerCase();
-    const models = getCachedModels();
+    const models = await getCachedModels();
 
     const filtered = models
       .filter(m => m.toLowerCase().includes(focused))

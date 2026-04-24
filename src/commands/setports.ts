@@ -4,7 +4,7 @@ import { setPortConfig } from '../services/configStore.js';
 export const setports = {
   data: new SlashCommandBuilder()
     .setName('setports')
-    .setDescription('Configure the port range for OpenCode server instances')
+    .setDescription('Configure the port range for Codex app-server instances')
     .addIntegerOption(option =>
       option.setName('min')
         .setDescription('Minimum port number')

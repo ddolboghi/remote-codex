@@ -2,7 +2,7 @@ import { Collection, SlashCommandBuilder, AutocompleteInteraction } from 'discor
 import { setpath } from './setpath.js';
 import { projects } from './projects.js';
 import { use } from './use.js';
-import { opencode } from './opencode.js';
+import { codex } from './codex.js';
 import { work } from './work.js';
 import { code } from './code.js';
 import { autowork } from './autowork.js';
@@ -24,7 +24,7 @@ export const commands = new Collection<string, Command>();
 commands.set(setpath.data.name, setpath as Command);
 commands.set(projects.data.name, projects as Command);
 commands.set(use.data.name, use as Command);
-commands.set(opencode.data.name, opencode);
+commands.set(codex.data.name, codex);
 commands.set(work.data.name, work);
 commands.set(code.data.name, code);
 commands.set(autowork.data.name, autowork);

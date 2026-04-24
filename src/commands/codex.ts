@@ -18,13 +18,13 @@ function getParentChannelId(interaction: ChatInputCommandInteraction): string {
   return interaction.channelId;
 }
 
-export const opencode: Command = {
+export const codex: Command = {
   data: new SlashCommandBuilder()
-    .setName('opencode')
-    .setDescription('Send a command to OpenCode')
+    .setName('codex')
+    .setDescription('Send a command to Codex')
     .addStringOption(option =>
       option.setName('prompt')
-        .setDescription('Prompt to send to OpenCode')
+        .setDescription('Prompt to send to Codex')
         .setRequired(true)) as SlashCommandBuilder,
   
   async execute(interaction: ChatInputCommandInteraction) {
@@ -78,4 +78,3 @@ export const opencode: Command = {
     await runPrompt(thread as any, threadId, prompt, channelId);
   }
 };
-
