@@ -69,7 +69,7 @@ https://github.com/user-attachments/assets/59cf162a-ec86-41b5-a1f3-9b1379acd9fd
 ### Prerequisites
 
 - **Node.js 22+** — [Download](https://nodejs.org/)
-- **Codex CLI** — Must be installed and working on your machine
+- **Codex CLI** — Must be installed and working on your machine. This project uses `codex app-server`, which Codex currently marks as experimental.
 - **Discord Account** — With a server where you have admin permissions
 
 ### Install via npm
