@@ -1,18 +1,10 @@
 # remote-codex
 
-> Control your AI coding assistant from anywhere — your phone, tablet, or another computer.
-
-![npm](https://img.shields.io/npm/dt/remote-codex) 📦 Used by developers worldwide — **2,000+ weekly downloads** on npm
-
-<div align="center">
-<img width="1024" alt="remote-codex logo" src="./asset/remo-code-logo.png" />
-</div>
-
-> 🆕 **New in v1.5!** Session management — browse, attach, and manage Codex CLI sessions from Discord with `/session`. Plus: model autocomplete for `/model set`. [See changelog](#changelog)
->
-> 🎤 **v1.4:** Voice message support — send voice messages that are automatically transcribed and processed. [See demo](#-voice-mode-demo)
-
 **remote-codex** is a Discord bot that bridges your local [Codex CLI](https://github.com/sst/codex) to Discord, enabling you to interact with your AI coding assistant remotely. Perfect for developers who want to:
+
+remote-codex is a Codex-focused adaptation of [remote-opencode](https://github.com/bevibing/remote-opencode), replacing the original opencode integration with Codex.
+
+> **Warning:** Some features from the original remote-opencode project may not work as expected after the Codex integration change.
 
 - 📱 **Code from mobile** — Send coding tasks from your phone while away from your desk
 - 💻 **Access from any device** — Use your powerful dev machine from a laptop or tablet
@@ -35,16 +27,6 @@ flowchart LR
 ```
 
 The bot runs on your development machine alongside Codex. When you send a command via Discord, it's forwarded to Codex, and the output streams back to you in real-time.
-
-## Demo
-
-https://github.com/user-attachments/assets/b6239cb6-234e-41e2-a4d1-d4dd3e86c7b9
-
-### 🎤 Voice Mode Demo
-
-https://github.com/user-attachments/assets/59cf162a-ec86-41b5-a1f3-9b1379acd9fd
-
----
 
 ## Table of Contents
 
@@ -169,13 +151,13 @@ If you prefer manual setup or need to troubleshoot:
 
 ## CLI Commands
 
-| Command                                 | Description                                          |
-| --------------------------------------- | ---------------------------------------------------- |
+| Command                              | Description                                          |
+| ------------------------------------ | ---------------------------------------------------- |
 | `remote-codex`                       | Start the bot (shows setup guide if not configured)  |
 | `remote-codex setup`                 | Interactive setup wizard — configures bot token, IDs |
 | `remote-codex start`                 | Start the Discord bot                                |
 | `remote-codex deploy`                | Deploy/update slash commands to Discord              |
-| `remote-codex undeploy`              | Remove slash commands from Discord                  |
+| `remote-codex undeploy`              | Remove slash commands from Discord                   |
 | `remote-codex config`                | Display current configuration info                   |
 | `remote-codex allow add <userId>`    | Add a Discord user ID to the allowlist               |
 | `remote-codex allow remove <userId>` | Remove a Discord user ID from the allowlist          |
@@ -357,9 +339,9 @@ Show git diffs for the current project directly in Discord — perfect for revie
 
 | Parameter | Description                                                        |
 | --------- | ------------------------------------------------------------------ |
-| `target`  | `unstaged` (default), `staged`, or `branch`                       |
+| `target`  | `unstaged` (default), `staged`, or `branch`                        |
 | `stat`    | Show `--stat` summary only instead of full diff (default: `false`) |
-| `base`    | Base branch for `target:branch` diff (default: `main`)            |
+| `base`    | Base branch for `target:branch` diff (default: `main`)             |
 
 **How it works:**
 
@@ -411,9 +393,9 @@ Manage voice message transcription settings. Requires an OpenAI API key (set via
 /voice remove               Remove the stored OpenAI API key
 ```
 
-| Parameter | Description |
-| --------- | ----------------------------------------- |
-| (none) | Subcommands only: `status`, `remove` |
+| Parameter | Description                          |
+| --------- | ------------------------------------ |
+| (none)    | Subcommands only: `status`, `remove` |
 
 **How it works:**
 
@@ -436,10 +418,10 @@ View available AI models or set the model for the current channel.
 /model set name:anthropic/claude-sonnet-4-20250514
 ```
 
-| Subcommand | Description                                       |
-| ---------- | ------------------------------------------------- |
-| `list`     | Show all available models grouped by provider     |
-| `set`      | Set the AI model for the current channel/thread   |
+| Subcommand | Description                                     |
+| ---------- | ----------------------------------------------- |
+| `list`     | Show all available models grouped by provider   |
+| `set`      | Set the AI model for the current channel/thread |
 
 **Features:**
 
@@ -729,8 +711,6 @@ The bot maintains persistent sessions. If you encounter issues:
 2. Check whether a custom `NO_PROXY` value is excluding a required remote host
 3. Leave loopback traffic direct; the bot already auto-adds `localhost`, `127.0.0.1`, and `::1`
 
----
-
 ## Development
 
 ### Run from source
@@ -755,137 +735,15 @@ npm start
 npm test
 ```
 
-### Project Structure
-
-```
-src/
-├── cli.ts                 # CLI entry point
-├── bot.ts                 # Discord client initialization
-├── commands/              # Slash command definitions
-│   ├── codex.ts        # Main AI interaction command
-│   ├── code.ts            # Passthrough mode toggle
-│   ├── work.ts            # Worktree management
-│   ├── diff.ts            # Git diff viewer
-│   ├── model.ts           # AI model list/set with autocomplete
-│   ├── session.ts         # Session browsing and management
-│   ├── allow.ts           # Allowlist management
-│   ├── voice.ts           # Voice transcription settings
-│   ├── setpath.ts         # Project registration
-│   ├── projects.ts        # List projects
-│   └── use.ts             # Channel binding
-├── handlers/              # Interaction handlers
-│   ├── interactionHandler.ts
-│   ├── buttonHandler.ts
-│   └── messageHandler.ts  # Passthrough + voice message handling
-├── services/              # Core business logic
-│   ├── serveManager.ts    # Codex process management
-│   ├── sessionManager.ts  # Session state management
-│   ├── queueManager.ts    # Automated job queuing (incl. voice)
-│   ├── executionService.ts # Core prompt execution logic
-│   ├── voiceService.ts    # Voice message STT (OpenAI Whisper)
-│   ├── codexAppClient.ts  # Codex app-server WebSocket client
-│   ├── dataStore.ts       # Persistent storage
-│   ├── configStore.ts     # Bot configuration
-│   └── worktreeManager.ts # Git worktree operations
-├── setup/                 # Setup wizard
-│   ├── wizard.ts          # Interactive setup (incl. voice opt-in)
-│   └── deploy.ts          # Command deployment
-└── utils/                 # Utilities
-    ├── messageFormatter.ts
-    └── threadHelper.ts
-```
-
----
-
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for a full history of changes.
 
-### [1.5.1] - 2026-03-24
-
-#### Added
-
-- **Proxy Support**: HTTP proxy environments for Discord requests via `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY`. Local Codex traffic is automatically excluded.
-
-#### Fixed
-
-- **Shell Spawn Removed**: Codex is now launched directly instead of through a shell, fixing service-environment failures.
-- **Silent Error Swallowing**: Discord message edit failures now fall back to sending new messages instead of silently dropping AI responses.
-- **Model Provider Prefix**: `/model set` no longer strips the provider prefix, fixing "Model not found" errors. Carriage returns in model names are now sanitized.
-
-### [1.5.0] - 2026-03-16
-
-#### Added
-
-- **`/session` Command**: Browse, attach, detach, and inspect Codex CLI sessions from Discord — resume previous conversations or share sessions across threads.
-- **Model Autocomplete**: `/model set` now suggests model names as you type.
-- **Full Model List**: `/model list` shows all available models without per-provider caps.
+### [0.1.0] - 2026-04-25
 
 #### Changed
 
-- Model validation now uses a fast in-memory cache instead of blocking CLI calls.
-
-### [1.4.0] - 2026-03-10
-
-#### Added
-
-- **Voice Message Transcription**: Send voice messages in `/code` passthrough threads — automatically transcribed via OpenAI Whisper and processed as text prompts.
-- **`/voice` Slash Command**: Check status and manage voice transcription settings from Discord.
-- **CLI Voice Management**: `remote-codex voice set|remove|status` commands for managing the OpenAI API key.
-- **Setup Wizard Integration**: Optional step to configure voice transcription during initial setup.
-
-### [1.3.0] - 2026-03-02
-
-#### Added
-
-- **`/diff` Command**: View git diffs directly from Discord — ideal for reviewing AI-made changes on mobile.
-
-### [1.2.0] - 2026-02-15
-
-#### Added
-
-- **Owner/Admin Authentication**: User allowlist system to restrict bot access to authorized Discord users only.
-- **`/allow` Slash Command**: Manage the allowlist directly from Discord (add, remove, list users).
-- **CLI Allowlist Management**: `remote-codex allow add|remove|list|reset` commands for managing access control from the terminal.
-- **Setup Wizard Integration**: Step 5 prompts for owner Discord user ID during initial setup.
-
-#### Security
-
-- Initial allowlist setup is restricted to CLI and setup wizard only — prevents bootstrap attacks from Discord.
-- Config file permissions hardened to `0o600` (owner-read/write only).
-- Discord user ID validation enforces snowflake format (`/^\d{17,20}$/`).
-- Cannot remove the last authorized user via Discord or CLI `remove` — prevents lockout.
-
-### [1.1.0] - 2026-02-05
-
-#### Added
-
-- **Automated Message Queuing**: Added a new system to queue multiple prompts in a thread. If the bot is busy, new messages are automatically queued and processed sequentially.
-- **Queue Management**: New `/queue` slash command suite to list, clear, pause, resume, and configure queue settings.
-
-### [1.0.10] - 2026-02-04
-
-#### Added
-
-- New `/setports` slash command to configure the port range for Codex server instances.
-
-#### Fixed
-
-- Fixed Windows-specific spawning issue (targeting `codex.cmd`).
-- Resolved `spawn EINVAL` errors on Windows.
-- Improved server reliability and suppressed `DEP0190` security warnings.
-
-### [1.0.9] - 2026-02-04
-
-#### Added
-
-- New `/model` slash command to set AI models per channel.
-- Support for `--model` flag in Codex server instances.
-
-#### Fixed
-
-- Fixed connection timeout issues.
-- Standardized internal communication to use `127.0.0.1`.
+- Replaced the original opencode integration from [remote-opencode](https://github.com/bevibing/remote-opencode) with Codex.
 
 ---
 
