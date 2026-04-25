@@ -139,4 +139,34 @@ describe('CodexAppClient', () => {
     expect(deltas).toEqual(['thread-123:pong']);
     expect(completed).toHaveBeenCalledWith('thread-123', 'turn-123', null);
   });
+
+  it('filters listed Codex threads by cwd', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const listPromise = client.listThreads('/repo');
+    expect(JSON.parse(socket.sent[2])).toMatchObject({
+      id: 2,
+      method: 'thread/list',
+      params: {
+        limit: 25,
+        cwd: '/repo',
+      },
+    });
+
+    socket.emit('message', {
+      id: 2,
+      result: {
+        data: [{ id: 'thread-123', name: 'Repo task', preview: 'fallback' }],
+      },
+    });
+
+    await expect(listPromise).resolves.toEqual([{ id: 'thread-123', title: 'Repo task' }]);
+  });
 });

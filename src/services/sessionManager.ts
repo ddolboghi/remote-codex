@@ -42,12 +42,12 @@ export async function getSessionInfo(port: number, sessionId: string): Promise<S
   return client.getThreadInfo(sessionId);
 }
 
-export async function listSessions(port: number): Promise<SessionInfo[]> {
+export async function listSessions(port: number, projectPath?: string): Promise<SessionInfo[]> {
   let client = findClientByPort(port);
   if (!client) {
     client = await connectPortClient(port);
   }
-  return client.listThreads();
+  return client.listThreads(projectPath);
 }
 
 export async function abortSession(port: number, sessionId: string, turnId?: string): Promise<boolean> {

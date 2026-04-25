@@ -214,10 +214,10 @@ describe('SessionManager', () => {
       expect(getSseClient('thread2')).toBeUndefined();
     });
 
-    it('lists Codex threads through a connected app-server client', async () => {
-      const sessions = await listSessions(3000);
+    it('lists Codex threads through a connected app-server client filtered by project path', async () => {
+      const sessions = await listSessions(3000, '/repo');
 
-      expect(codexMock.instances[0].listThreads).toHaveBeenCalled();
+      expect(codexMock.instances[0].listThreads).toHaveBeenCalledWith('/repo');
       expect(sessions).toEqual([{ id: 'codex-thread-1', title: 'First thread' }]);
     });
 

@@ -118,8 +118,13 @@ export class CodexAppClient {
     return true;
   }
 
-  async listThreads(limit = 25): Promise<SessionInfo[]> {
-    const result: any = await this.request('thread/list', { limit });
+  async listThreads(cwd?: string, limit = 25): Promise<SessionInfo[]> {
+    const params: { limit: number; cwd?: string } = { limit };
+    if (cwd) {
+      params.cwd = cwd;
+    }
+
+    const result: any = await this.request('thread/list', params);
     const threads = Array.isArray(result?.threads) ? result.threads : Array.isArray(result?.data) ? result.data : [];
     return threads.map((thread: any) => ({
       id: getString(thread.id),

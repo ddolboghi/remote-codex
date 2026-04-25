@@ -78,7 +78,7 @@ export const session: Command = {
         const port = await serveManager.spawnServe(projectPath);
         await serveManager.waitForReady(port, 30000, projectPath);
 
-        const activeSessions = await sessionManager.listSessions(port);
+        const activeSessions = await sessionManager.listSessions(port, projectPath);
         const persistedSessions = dataStore
           .getAllThreadSessions()
           .filter((s) => s.projectPath === projectPath || s.projectPath.startsWith(projectPath));
@@ -146,7 +146,7 @@ export const session: Command = {
         const port = await serveManager.spawnServe(projectPath);
         await serveManager.waitForReady(port, 30000, projectPath);
 
-        const activeSessions = await sessionManager.listSessions(port);
+        const activeSessions = await sessionManager.listSessions(port, projectPath);
         if (activeSessions.length === 0) {
           await interaction.editReply({
             content: '❌ No sessions available to attach.',
