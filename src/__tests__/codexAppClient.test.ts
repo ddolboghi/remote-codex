@@ -95,6 +95,78 @@ describe('CodexAppClient', () => {
     await expect(threadPromise).resolves.toBe('thread-123');
   });
 
+  it('omits the model override when starting with the default model', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const threadPromise = client.startThread('/repo');
+    const startRequest = JSON.parse(socket.sent[2]);
+    expect(startRequest.params).not.toHaveProperty('model');
+
+    socket.emit('message', {
+      id: 2,
+      result: {
+        model: 'gpt-5.5',
+        thread: { id: 'thread-123', status: { type: 'idle' } },
+      },
+    });
+
+    await expect(threadPromise).resolves.toBe('thread-123');
+  });
+
+  it('omits an empty model override when starting a thread', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const threadPromise = client.startThread('/repo', '');
+    const startRequest = JSON.parse(socket.sent[2]);
+    expect(startRequest.params).not.toHaveProperty('model');
+
+    socket.emit('message', {
+      id: 2,
+      result: {
+        model: 'gpt-5.5',
+        thread: { id: 'thread-123', status: { type: 'idle' } },
+      },
+    });
+
+    await expect(threadPromise).resolves.toBe('thread-123');
+  });
+
+  it('rejects started threads without runnable model metadata', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const threadPromise = client.startThread('/repo');
+    socket.emit('message', {
+      id: 2,
+      result: {
+        model: '',
+        thread: { id: 'thread-123', status: { type: 'idle' } },
+      },
+    });
+
+    await expect(threadPromise).rejects.toThrow('started thread is not runnable');
+  });
+
   it('streams assistant deltas and resolves when the turn completes', async () => {
     const { CodexAppClient } = await import('../services/codexAppClient.js');
     const client = new CodexAppClient(14097);

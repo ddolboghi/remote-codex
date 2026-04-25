@@ -96,18 +96,26 @@ export class CodexAppClient {
   }
 
   async startThread(projectPath: string, model?: string): Promise<string> {
-    const result: any = await this.request('thread/start', {
+    const params: Record<string, unknown> = {
       cwd: projectPath,
-      model: model ?? null,
       approvalPolicy: 'never',
       sandbox: 'danger-full-access',
       experimentalRawEvents: false,
       persistExtendedHistory: true,
-    });
+    };
+
+    if (model) {
+      params.model = model;
+    }
+
+    const result: any = await this.request('thread/start', params);
 
     const threadId = result?.thread?.id;
     if (!threadId) {
       throw new Error('Invalid Codex thread/start response: missing thread.id');
+    }
+    if (result?.thread?.status?.type !== 'idle' || typeof result?.model !== 'string' || !result.model.trim()) {
+      throw new Error('Codex started thread is not runnable');
     }
     return threadId;
   }

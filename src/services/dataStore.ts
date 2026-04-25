@@ -93,7 +93,8 @@ export function setChannelModel(channelId: string, model: string): boolean {
 
 export function getChannelModel(channelId: string): string | undefined {
   const binding = loadData().bindings.find(b => b.channelId === channelId);
-  return sanitizeModel(binding?.model ?? '');
+  const model = sanitizeModel(binding?.model ?? '');
+  return model || undefined;
 }
 
 export function getChannelBinding(channelId: string): string | undefined {
