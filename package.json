@@ -1,6 +1,6 @@
 {
   "name": "remote-codex",
-  "version": "1.5.2",
+  "version": "0.1.0",
   "description": "Discord bot for remote Codex app-server access",
   "main": "dist/src/index.js",
   "bin": {
