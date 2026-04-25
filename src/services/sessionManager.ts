@@ -94,10 +94,14 @@ export async function ensureSessionForThread(threadId: string, projectPath: stri
   }
 
   if (existingSession && existingSession.projectPath === projectPath) {
-    const isValid = await client.getThreadInfo(existingSession.sessionId);
-    if (isValid) {
-      setSessionForThread(threadId, existingSession.sessionId, projectPath, port);
-      return existingSession.sessionId;
+    try {
+      const resumedThreadId = await client.resumeThread(existingSession.sessionId, projectPath, model);
+      setSessionForThread(threadId, resumedThreadId, projectPath, port);
+      return resumedThreadId;
+    } catch (error) {
+      console.warn(
+        `[session] Stored Codex thread could not be resumed; starting a new thread: ${error instanceof Error ? error.message : error}`
+      );
     }
   }
 

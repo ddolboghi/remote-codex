@@ -28,6 +28,7 @@ const codexMock = vi.hoisted(() => {
   class MockCodexAppClient {
     connect = vi.fn(async () => {});
     startThread = vi.fn(async () => 'codex-thread-new');
+    resumeThread = vi.fn(async (threadId: string) => threadId);
     startTurn = vi.fn(async () => 'turn-new');
     getThreadInfo = vi.fn(async (threadId: string) => ({ id: threadId, title: 'Codex thread' }));
     listThreads = vi.fn(async () => [{ id: 'codex-thread-1', title: 'First thread' }]);
@@ -97,29 +98,31 @@ describe('SessionManager', () => {
       expect(sessionId).toBe('codex-thread-new');
     });
 
-    it('reuses an existing valid Codex thread for the same project', async () => {
+    it('resumes an existing Codex thread for the same project before reuse', async () => {
       setSessionForThread('thread-1', 'codex-thread-existing', '/repo', 3000);
       const original = dataStoreMock.getThreadSession('thread-1');
 
       const sessionId = await ensureSessionForThread('thread-1', '/repo', 3000, 'gpt-5.5');
 
       const client = codexMock.instances[0];
-      expect(client.getThreadInfo).toHaveBeenCalledWith('codex-thread-existing');
+      expect(client.resumeThread).toHaveBeenCalledWith('codex-thread-existing', '/repo', 'gpt-5.5');
+      expect(client.getThreadInfo).not.toHaveBeenCalled();
       expect(client.startThread).not.toHaveBeenCalled();
       expect(sessionId).toBe('codex-thread-existing');
       expect(dataStoreMock.getThreadSession('thread-1')?.createdAt).toBe(original?.createdAt);
     });
 
-    it('creates a new Codex thread when the stored thread is invalid', async () => {
+    it('creates a new Codex thread when the stored thread cannot be resumed', async () => {
       setSessionForThread('thread-1', 'codex-thread-stale', '/repo', 3000);
 
       const promise = ensureSessionForThread('thread-1', '/repo', 3000);
       const client = codexMock.instances[0];
-      client.getThreadInfo.mockResolvedValueOnce(null);
+      client.resumeThread.mockRejectedValueOnce(new Error('thread not found: codex-thread-stale'));
 
       const sessionId = await promise;
 
       expect(sessionId).toBe('codex-thread-new');
+      expect(client.startThread).toHaveBeenCalledWith('/repo', undefined);
       expect(dataStoreMock.getThreadSession('thread-1')?.sessionId).toBe('codex-thread-new');
     });
 

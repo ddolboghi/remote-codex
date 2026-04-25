@@ -34,6 +34,7 @@ export class CodexAppClient {
   private nextRequestId = 1;
   private pending = new Map<number, PendingRequest>();
   private initialized = false;
+  private intentionalClose = false;
   private textDeltaCallbacks: TextDeltaCallback[] = [];
   private turnCompletedCallbacks: TurnCompletedCallback[] = [];
   private errorCallbacks: ErrorCallback[] = [];
@@ -45,20 +46,36 @@ export class CodexAppClient {
       return Promise.resolve();
     }
 
+    this.intentionalClose = false;
     const socket = new WebSocket(`ws://127.0.0.1:${this.port}`);
     this.socket = socket;
 
     socket.addEventListener('message', (event) => {
+      if (this.socket !== socket) {
+        return;
+      }
       this.handleMessage(String(event.data));
     });
 
     socket.addEventListener('error', () => {
+      if (this.socket !== socket) {
+        return;
+      }
+      if (this.intentionalClose) {
+        return;
+      }
       this.rejectAll(new Error('Codex app-server WebSocket error'));
       this.emitError(new Error('Codex app-server WebSocket error'));
     });
 
     socket.addEventListener('close', () => {
+      if (this.socket !== socket) {
+        return;
+      }
       this.initialized = false;
+      if (this.intentionalClose) {
+        return;
+      }
       this.rejectAll(new Error('Codex app-server WebSocket closed'));
     });
 
@@ -93,6 +110,31 @@ export class CodexAppClient {
       throw new Error('Invalid Codex thread/start response: missing thread.id');
     }
     return threadId;
+  }
+
+  async resumeThread(threadId: string, projectPath: string, model?: string): Promise<string> {
+    const params: Record<string, unknown> = {
+      threadId,
+      cwd: projectPath,
+      approvalPolicy: 'never',
+      sandbox: 'danger-full-access',
+      persistExtendedHistory: true,
+    };
+
+    if (model) {
+      params.model = model;
+    }
+
+    const result: any = await this.request('thread/resume', params);
+
+    const resumedThreadId = result?.thread?.id;
+    if (!resumedThreadId) {
+      throw new Error('Invalid Codex thread/resume response: missing thread.id');
+    }
+    if (result?.thread?.status?.type !== 'idle' || typeof result?.model !== 'string' || !result.model.trim()) {
+      throw new Error('Codex resumed thread is not runnable');
+    }
+    return resumedThreadId;
   }
 
   async startTurn(threadId: string, prompt: string, model?: string): Promise<string> {
@@ -185,6 +227,7 @@ export class CodexAppClient {
   }
 
   disconnect(): void {
+    this.intentionalClose = true;
     this.socket?.close();
     this.socket = null;
     this.initialized = false;

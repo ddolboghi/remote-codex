@@ -87,7 +87,8 @@ describe('CodexAppClient', () => {
     socket.emit('message', {
       id: 2,
       result: {
-        thread: { id: 'thread-123' },
+        model: 'gpt-5.5',
+        thread: { id: 'thread-123', status: { type: 'idle' } },
       },
     });
 
@@ -168,5 +169,178 @@ describe('CodexAppClient', () => {
     });
 
     await expect(listPromise).resolves.toEqual([{ id: 'thread-123', title: 'Repo task' }]);
+  });
+
+  it('resumes a persisted Codex thread before reuse', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const resumePromise = client.resumeThread('thread-123', '/repo', 'gpt-5.5');
+    expect(JSON.parse(socket.sent[2])).toMatchObject({
+      id: 2,
+      method: 'thread/resume',
+      params: {
+        threadId: 'thread-123',
+        cwd: '/repo',
+        model: 'gpt-5.5',
+        approvalPolicy: 'never',
+        sandbox: 'danger-full-access',
+        persistExtendedHistory: true,
+      },
+    });
+
+    socket.emit('message', {
+      id: 2,
+      result: {
+        model: 'gpt-5.5',
+        thread: { id: 'thread-123', status: { type: 'idle' } },
+      },
+    });
+
+    await expect(resumePromise).resolves.toBe('thread-123');
+  });
+
+  it('omits the model override when resuming with the default model', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const resumePromise = client.resumeThread('thread-123', '/repo');
+    const resumeRequest = JSON.parse(socket.sent[2]);
+    expect(resumeRequest.params).not.toHaveProperty('model');
+
+    socket.emit('message', {
+      id: 2,
+      result: {
+        model: 'gpt-5.5',
+        thread: { id: 'thread-123', status: { type: 'idle' } },
+      },
+    });
+
+    await expect(resumePromise).resolves.toBe('thread-123');
+  });
+
+  it.each(['systemError', 'notLoaded', 'active'])('rejects resumed threads with %s status', async (status) => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const resumePromise = client.resumeThread('thread-123', '/repo');
+    socket.emit('message', {
+      id: 2,
+      result: {
+        model: 'gpt-5.5',
+        thread: { id: 'thread-123', status: { type: status } },
+      },
+    });
+
+    await expect(resumePromise).rejects.toThrow('resumed thread is not runnable');
+  });
+
+  it('rejects resumed threads with missing model metadata', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const resumePromise = client.resumeThread('thread-123', '/repo');
+    socket.emit('message', {
+      id: 2,
+      result: {
+        model: '',
+        thread: { id: 'thread-123', status: { type: 'idle' } },
+      },
+    });
+
+    await expect(resumePromise).rejects.toThrow('resumed thread is not runnable');
+  });
+
+  it('rejects resumed threads without model metadata', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    const resumePromise = client.resumeThread('thread-123', '/repo');
+    socket.emit('message', {
+      id: 2,
+      result: {
+        thread: { id: 'thread-123', status: { type: 'idle' } },
+      },
+    });
+
+    await expect(resumePromise).rejects.toThrow('resumed thread is not runnable');
+  });
+
+  it('does not emit a connection error for an intentional disconnect', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+    const onError = vi.fn();
+
+    client.onError(onError);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.emit('open');
+    socket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await connectPromise;
+
+    client.disconnect();
+    socket.emit('error');
+    socket.emit('close');
+
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('ignores delayed errors from a previous intentionally closed socket after reconnect', async () => {
+    const { CodexAppClient } = await import('../services/codexAppClient.js');
+    const client = new CodexAppClient(14097);
+    const onError = vi.fn();
+
+    client.onError(onError);
+
+    const firstConnectPromise = client.connect();
+    const firstSocket = MockWebSocket.instances[0];
+    firstSocket.emit('open');
+    firstSocket.emit('message', { id: 1, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await firstConnectPromise;
+
+    client.disconnect();
+
+    const secondConnectPromise = client.connect();
+    const secondSocket = MockWebSocket.instances[1];
+    secondSocket.emit('open');
+
+    firstSocket.emit('error');
+    firstSocket.emit('close');
+
+    expect(onError).not.toHaveBeenCalled();
+
+    secondSocket.emit('message', { id: 2, result: { userAgent: 'probe', codexHome: '/tmp', platformFamily: 'unix', platformOs: 'linux' } });
+    await secondConnectPromise;
   });
 });
